@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:gamypad/client.dart';
 import 'package:gamypad/widgets/dpad.dart';
 import 'package:gamypad/widgets/game_button.dart';
-import 'package:gamypad/client.dart';
 import 'package:gamypad/widgets/facebutton.dart';
 
 class Gamepad extends StatefulWidget {
@@ -13,15 +13,11 @@ class Gamepad extends StatefulWidget {
 
 class _GamepadState extends State<Gamepad> {
   @override
-  void initState() {
-    connectServer();
-    super.initState();
-  }
-
-  @override
   void dispose() {
-    disconnectServer();
     super.dispose();
+    if (socket != null) {
+      disconnectServer();
+    }
   }
 
   @override

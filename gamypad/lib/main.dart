@@ -15,7 +15,7 @@ void main() async {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/gamepad',
+      initialRoute: '/',
       routes: {'/': (context) => Home(), "/gamepad": (context) => Gamepad()},
     ),
   );

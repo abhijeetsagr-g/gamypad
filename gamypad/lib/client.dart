@@ -5,13 +5,11 @@ bool isConnected = false;
 bool isError = false;
 
 Socket? socket;
-String serverIP = "192.168.1.6";
-final int port = 9999;
 final int headerSize = 64;
 
 Object? error;
 
-void connectServer() async {
+void connectServer(serverIP, port) async {
   isError = false;
   try {
     socket = await Socket.connect(serverIP, port);
@@ -22,8 +20,6 @@ void connectServer() async {
 }
 
 void sendJson(String btn, String action) {
-  print("${btn} is ${action}");
-
   if (socket != null) {
     final data = jsonEncode({"btn": btn, "action": action});
     final length = utf8.encode(data).length;
