@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:gamypad/widgets/game_button.dart';
 import 'package:gamypad/widgets/dpad.dart';
+import 'package:gamypad/widgets/game_button.dart';
+import 'package:gamypad/client.dart';
+import 'package:gamypad/widgets/facebutton.dart';
 
 class Gamepad extends StatefulWidget {
   const Gamepad({super.key});
@@ -11,8 +13,21 @@ class Gamepad extends StatefulWidget {
 
 class _GamepadState extends State<Gamepad> {
   @override
+  void initState() {
+    connectServer();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    disconnectServer();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
@@ -27,7 +42,7 @@ class _GamepadState extends State<Gamepad> {
                       padding: EdgeInsets.fromLTRB(8, 2, 0, 0),
                       child: GameButtons(
                         label: "LT",
-                        btnColor: Colors.white60,
+                        btnColor: Colors.grey.shade600,
                         btnSize: Size(130, 60),
                       ),
                     ),
@@ -38,7 +53,7 @@ class _GamepadState extends State<Gamepad> {
                       padding: const EdgeInsets.fromLTRB(8, 0, 0, 2),
                       child: GameButtons(
                         label: "LB",
-                        btnColor: Colors.white60,
+                        btnColor: Colors.grey.shade600,
                         btnSize: Size(130, 60),
                       ),
                     ),
@@ -51,7 +66,7 @@ class _GamepadState extends State<Gamepad> {
                   children: [
                     GameButtons(
                       label: "SELECT",
-                      btnColor: Colors.white,
+                      btnColor: Colors.grey.shade400,
                       btnSize: Size(20, 20),
                     ),
 
@@ -59,15 +74,15 @@ class _GamepadState extends State<Gamepad> {
 
                     GameButtons(
                       label: "GUIDE",
-                      btnColor: Colors.green,
-                      btnSize: Size(40, 30),
+                      btnColor: Color(0xFF107C10),
+                      btnSize: Size(40, 40),
                     ),
 
                     SizedBox(width: 20),
 
                     GameButtons(
                       label: "START",
-                      btnColor: Colors.greenAccent,
+                      btnColor: Colors.grey.shade400,
                       btnSize: Size(20, 20),
                     ),
                   ],
@@ -79,8 +94,8 @@ class _GamepadState extends State<Gamepad> {
                     Padding(
                       padding: EdgeInsets.fromLTRB(0, 2, 10, 0),
                       child: GameButtons(
-                        label: "LT",
-                        btnColor: Colors.white60,
+                        label: "RT",
+                        btnColor: Colors.grey.shade600,
                         btnSize: Size(130, 60),
                       ),
                     ),
@@ -90,8 +105,8 @@ class _GamepadState extends State<Gamepad> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0, 0, 10, 2),
                       child: GameButtons(
-                        label: "LB",
-                        btnColor: Colors.white60,
+                        label: "RB",
+                        btnColor: Colors.grey.shade600,
                         btnSize: Size(130, 60),
                       ),
                     ),
@@ -100,7 +115,11 @@ class _GamepadState extends State<Gamepad> {
               ],
             ),
             SizedBox(height: 40),
-            Row(children: [Dpad()]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+              children: [Dpad(), Facebutton()],
+            ),
           ],
         ),
       ),

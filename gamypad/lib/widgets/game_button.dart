@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gamypad/client.dart';
 
 class GameButtons extends StatefulWidget {
   const GameButtons({
@@ -23,10 +24,10 @@ class _GameButtonsState extends State<GameButtons> {
   @override
   void initState() {
     super.initState();
-    _giveLabel =
-        !(widget.label == "START" ||
-            widget.label == "SELECT" ||
-            widget.label == "GUIDE");
+    if (["START", "GUIDE", "SELECT"].contains(widget.label) ||
+        widget.label.contains("+")) {
+      _giveLabel = false;
+    }
   }
 
   @override
@@ -36,18 +37,40 @@ class _GameButtonsState extends State<GameButtons> {
         setState(() {
           _pressed = true;
         });
+        if (widget.label.contains("+")) {
+          List<String> part = widget.label.split("+");
+          sendJson(part[0], "press");
+          sendJson(part[1], "press");
+        } else {
+          sendJson(widget.label, "press");
+        }
       }, // send press
 
       onTapUp: (_) {
         setState(() {
           _pressed = false;
         });
+
+        if (widget.label.contains("+")) {
+          List<String> part = widget.label.split("+");
+          sendJson(part[0], "release");
+          sendJson(part[1], "release");
+        } else {
+          sendJson(widget.label, "release");
+        }
       }, // send release
 
       onTapCancel: () {
         setState(() {
           _pressed = false;
         });
+        if (widget.label.contains("+")) {
+          List<String> part = widget.label.split("+");
+          sendJson(part[0], "release");
+          sendJson(part[1], "release");
+        } else {
+          sendJson(widget.label, "release");
+        }
       }, // release on cancel
 
       child: Container(

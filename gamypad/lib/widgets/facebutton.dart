@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad/widgets/game_button.dart';
 
-// ignore: camel_case_types
-enum dir { up, down, left, right, none }
-
-class Dpad extends StatefulWidget {
-  const Dpad({super.key});
+class Facebutton extends StatefulWidget {
+  const Facebutton({super.key});
 
   @override
-  State<Dpad> createState() => _DpadState();
+  State<Facebutton> createState() => _FacebuttonState();
 }
 
-class _DpadState extends State<Dpad> {
+class _FacebuttonState extends State<Facebutton> {
   @override
   Widget build(BuildContext context) {
     Size targetSize = const Size(
@@ -34,19 +31,19 @@ class _DpadState extends State<Dpad> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GameButtons(
-                    label: "UP+LEFT",
+                    label: "Y+X",
                     btnColor: Color.fromRGBO(255, 255, 255, 0),
                     btnSize: targetSize,
                   ),
 
                   GameButtons(
-                    label: "UP",
-                    btnColor: Colors.grey,
+                    label: "Y",
+                    btnColor: Colors.yellow,
                     btnSize: targetSize,
                   ),
 
                   GameButtons(
-                    label: "UP+RIGHT",
+                    label: "Y+B",
                     btnColor: Color.fromRGBO(255, 255, 255, 0),
                     btnSize: targetSize,
                   ),
@@ -58,16 +55,16 @@ class _DpadState extends State<Dpad> {
                 children: [
                   // LEFT button
                   GameButtons(
-                    label: "LEFT",
-                    btnColor: Colors.grey,
+                    label: "X",
+                    btnColor: Colors.blue,
                     btnSize: targetSize,
                   ),
 
                   SizedBox(width: targetSize.width), // To push right button
                   // RIGHT button
                   GameButtons(
-                    label: "RIGHT",
-                    btnColor: Colors.grey,
+                    label: "B",
+                    btnColor: Colors.red,
                     btnSize: targetSize,
                   ),
                 ],
@@ -78,18 +75,18 @@ class _DpadState extends State<Dpad> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GameButtons(
-                    label: "DOWN+LEFT",
+                    label: "A+X",
                     btnColor: Color.fromRGBO(255, 255, 255, 0),
                     btnSize: targetSize,
                   ),
 
                   GameButtons(
-                    label: "DOWN",
-                    btnColor: Colors.grey,
+                    label: "A",
+                    btnColor: Colors.green,
                     btnSize: targetSize,
                   ),
                   GameButtons(
-                    label: "DOWN+RIGHT",
+                    label: "A+B",
                     btnColor: Color.fromRGBO(255, 255, 255, 0),
                     btnSize: targetSize,
                   ),
