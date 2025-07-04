@@ -42,3 +42,9 @@ OS Support:✅ Arch Linux (tested)✅ Should work on other Linux distros and Win
 🤝 Contribute
 
 This project is open to contributions! Whether it’s improving UI, adding new control schemes, or porting it to iOS — you're welcome to help!
+
+
+INSTALLATION:
+
+
+
