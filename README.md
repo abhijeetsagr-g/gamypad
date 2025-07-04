@@ -10,7 +10,7 @@ This project features:
 
 🖥️ Python server on Arch Linux (or any Linux/Windows) that translates inputs to virtual gamepad signals using vgamepad
 
-Status: 🚧 Work in ProgressContributions are welcome! Feel free to open issues or submit pull requests 🙌
+Status: 🚧 Work in Progress, and contributions are welcome! Feel free to open issues or submit pull requests 🙌
 
 🧠 How It Works
 
