@@ -10,7 +10,7 @@ Connect with your phone
 Have fun
 
 INSTALL:- 
-[My Awesome App v1.0.0](https://example.com/path/to/your/app.apk
+[Gamypad v0.1](https://github.com/abhijeetsagr-g/gamypad/blob/main/app-release.apk)
 
 CONTRIBUTE
 There is a lot of things to do, and I would love for all to contribute and make the experience better!
