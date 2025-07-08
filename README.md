@@ -1,20 +1,11 @@
-Gamypad - Make your phone, a gamepad.
+<div align="center">
+  <img src="/assets/logo.svg" style="width: 20rem;">
+  <h1 style="font-size: 2.5rem; margin-top: 0.5rem;">🎮 Gamypad - Make your phone, a gamepad 🎮</h1>
+</div>
 
-![home](https://github.com/user-attachments/assets/fcb73152-c5d7-47dd-8188-1af9c9d23ffe)
-![gamepad](https://github.com/user-attachments/assets/ab5b2e23-9809-4d92-b49b-c70fe109d949)
+# [Documentation 📄](/docs)
 
+# [Faq 📌](/docs/FAQ.md)
 
-HOW TO USE?
-Install the game from below;
-clone the repo;
-Open the python_files folder;
-run the venv;
-run the server.py;
-Connect with your phone;
-Have fun;
-
-INSTALL:- 
-[Gamypad v0.1](https://github.com/abhijeetsagr-g/gamypad/blob/main/app-release.apk)
-
-CONTRIBUTE
+# CONTRIBUTE
 There is a lot of things to do, and I would love for all to contribute and make the experience better!
