@@ -1,0 +1,1 @@
+ /home/vansg/MainProject/Gamypad-extra/gamypad_extra/.dart_tool/flutter_build/9824e58c3eaffab4522af0ce63f55b26/native_assets.json: 
