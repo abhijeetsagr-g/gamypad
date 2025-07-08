@@ -1,0 +1,31 @@
+name: Build
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'  # or 'stable'
+
+      - name: Install stuff
+        run: |
+          pwd
+          git clone https://github.com/abhijeetsagr-g/gamypad.git
+          cd gamypad/gamypad_extra
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: gamypad/gamypad_extra/build/app/outputs/flutter-apk/app-release.apk
