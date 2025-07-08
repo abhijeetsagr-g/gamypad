@@ -7,24 +7,18 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.1'  # or 'stable'
 
-      - name: Install dependencies
-        working-directory: gamypad/gamypad_extra
+      - name: Install stuff
         run: |
           pwd
+          git clone https://github.com/Twig6943/gamypad.git 
+          cd gamypad/gamypad_extra
           flutter pub get
-
-      - name: Run build
-        working-directory: gamypad/gamypad_extra
-        run: flutter build apk --release
+          flutter build apk --release
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
