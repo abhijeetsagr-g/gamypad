@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_extra/client.dart';
+import 'package:gamypad_extra/widgets/card_container.dart';
 import 'package:gamypad_extra/widgets/show_message.dart' show ShowMessage;
 
 class Home extends StatefulWidget {
@@ -14,6 +15,11 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   Future<void> checkIP() async {
+    if (isConnected) {
+      Navigator.pushNamed(context, "/gamepad");
+    }
+    setState(() {});
+
     final ip = widget.address.text.trim();
     final portText = widget.port.text.trim();
 
@@ -43,7 +49,6 @@ class _HomeState extends State<Home> {
       ShowMessage.show(context, "Connection failed: $connectionError");
       return;
     }
-    setState(() {});
 
     Navigator.pushNamed(context, "/gamepad");
   }
@@ -80,6 +85,17 @@ class _HomeState extends State<Home> {
                 isConnected ? Text("Connected") : Text("Not Connected"),
               ],
             ),
+            isConnected
+                ? TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        disconnectServer();
+                        isConnected = false;
+                      });
+                    },
+                    label: Text("Disconnect"),
+                  )
+                : SizedBox(width: 20),
           ],
         ),
       ),
@@ -87,6 +103,7 @@ class _HomeState extends State<Home> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            CardContainer(),
             Row(
               children: [
                 Expanded(
@@ -104,7 +121,9 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                 ),
+
                 SizedBox(width: 5),
+
                 Expanded(
                   flex: 1,
                   child: TextField(
