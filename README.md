@@ -7,5 +7,5 @@
 
 # [Faq 📌](/docs/FAQ.md)
 
-# CONTRIBUTE
+### CONTRIBUTE
 There is a lot of things to do, and I would love for all to contribute and make the experience better!
