@@ -10,11 +10,13 @@ Turn your phone into a wireless game controller for your PC.
 ## 🚀 How to Use
 
 1. Open a terminal and navigate to the `python_files` directory:
+
    ```bash
    cd python_files
    ```
 
 2. Make the server script executable:
+
    ```bash
    chmod +x run_server.sh
    ```
