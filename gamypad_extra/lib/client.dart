@@ -8,29 +8,21 @@ Socket? socket;
 final int headerSize = 64;
 Object? error;
 
-Future<void> connectServer(String serverIP, int port) async {
+Future<Object?> connectServer(String serverIP, int port) async {
   isError = false;
   try {
     socket = await Socket.connect(serverIP, port);
-
     isConnected = true;
-
-    socket!.listen(
-      (data) {
-        // Handle response if needed
-      },
-      onError: (e) {
-        isError = true;
-        error = e;
-      },
-      onDone: () {
-        isConnected = false;
-      },
-    );
+    return null;
   } catch (e) {
     isError = true;
     error = e;
+    return e;
   }
+}
+
+void checkConnection() {
+  if (socket != null) {}
 }
 
 void sendJson(String btn, String action) {

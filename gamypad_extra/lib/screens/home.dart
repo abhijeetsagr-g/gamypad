@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_extra/client.dart';
-import 'package:gamypad_extra/widgets/show_message.dart' show SnackBarUtils;
+import 'package:gamypad_extra/widgets/show_message.dart' show ShowMessage;
 
 class Home extends StatefulWidget {
   Home({super.key});
@@ -13,7 +13,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  void checkIP() {
+  Future<void> checkIP() async {
     final ip = widget.address.text.trim();
     final portText = widget.port.text.trim();
 
@@ -23,118 +23,139 @@ class _HomeState extends State<Home> {
     );
 
     if (ip.isEmpty || portText.isEmpty) {
-      SnackBarUtils.show(context, "IP address and port must not be empty.");
+      ShowMessage.show(context, "IP address and port must not be empty.");
 
       return;
     }
 
     if (!ipRegex.hasMatch(ip)) {
-      SnackBarUtils.show(context, "Invalid IP address format.");
+      ShowMessage.show(context, "Invalid IP address format.");
       return;
     }
 
     final port = int.tryParse(portText);
     if (port == null || port < 0 || port > 65535) {
-      SnackBarUtils.show(context, "Port must be a number between 0 and 65535.");
+      ShowMessage.show(context, "Port must be a number between 0 and 65535.");
       return;
     }
-    connectServer(ip, int.parse(portText));
+    final connectionError = await connectServer(ip, port);
+    if (connectionError != null) {
+      ShowMessage.show(context, "Connection failed: $connectionError");
+      return;
+    }
+    setState(() {});
+
     Navigator.pushNamed(context, "/gamepad");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 20, 20, 20),
+      backgroundColor: Color.fromARGB(255, 215, 215, 215),
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 220, 20, 60),
-        title: const Text(
-          "Gamepad",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+        backgroundColor: Color.fromARGB(255, 215, 215, 215),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                isConnected
+                    ? Container(
+                        width: 10.0,
+                        height: 10.0,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : Container(
+                        width: 10.0,
+                        height: 10.0,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                SizedBox(width: 10),
+                isConnected ? Text("Connected") : Text("Not Connected"),
+              ],
+            ),
+          ],
         ),
-        centerTitle: true,
       ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0), // Outer padding
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: TextField(
-                        controller: widget.address,
-                        decoration: InputDecoration(
-                          hintText: "Address",
-                          labelText: "IP Address",
-                          focusColor: Color.fromARGB(255, 20, 20, 20),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: TextField(
-                        controller: widget.port,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          hintText: "Port",
-                          labelText: "Port",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    checkIP();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    "JOIN",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 20, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    autocorrect: false,
+                    controller: widget.address,
+                    decoration: InputDecoration(
+                      hintText: "Address",
+                      labelText: "IP Address",
+                      focusColor: Color.fromARGB(255, 20, 20, 20),
+                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
                   ),
                 ),
+                SizedBox(width: 5),
+                Expanded(
+                  flex: 1,
+                  child: TextField(
+                    autocorrect: false,
+                    controller: widget.port,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: "Port",
+                      labelText: "Port",
+                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 10),
+
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  checkIP();
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  "Connect",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 20, 20, 20),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        backgroundColor: Color.fromARGB(255, 220, 20, 60),
-        child: Icon(Icons.help_outline, color: Colors.white),
+        backgroundColor: Color.fromARGB(255, 39, 63, 79),
+
+        child: Icon(Icons.help, color: Colors.white),
       ),
     );
   }
