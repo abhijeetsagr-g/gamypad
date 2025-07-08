@@ -8,3 +8,6 @@ Have fun;
 
 INSTALL:- 
 [Gamypad apk](https://github.com/abhijeetsagr-g/gamypad/releases)
+
+
+(Please rewrite this)
