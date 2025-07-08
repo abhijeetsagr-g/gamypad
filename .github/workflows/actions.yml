@@ -2,15 +2,14 @@ name: Build
 
 on: workflow_dispatch
 
-
-steps:
-  - name: Checkout Repository
-    uses: actions/checkout@v4
-
 jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
