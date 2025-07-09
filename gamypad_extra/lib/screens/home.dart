@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_extra/client.dart';
-import 'package:gamypad_extra/widgets/card_container.dart';
-import 'package:gamypad_extra/widgets/show_message.dart' show ShowMessage;
+import 'package:gamypad_extra/widgets/show_message.dart';
 
 class Home extends StatefulWidget {
-  Home({super.key});
-
-  final TextEditingController address = TextEditingController();
-  final TextEditingController port = TextEditingController();
+  const Home({super.key});
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  Future<void> checkIP() async {
-    if (isConnected) {
-      Navigator.pushNamed(context, "/gamepad");
-    }
-    setState(() {});
+  // Required Colors
+  Color backgroundColor = Color.fromARGB(255, 238, 238, 238);
+  Color wordColor = Color.fromARGB(255, 42, 71, 89);
+  Color btnColor = Color.fromARGB(255, 247, 155, 114);
+  Color extraColor = Color.fromARGB(255, 221, 221, 221);
 
-    final ip = widget.address.text.trim();
-    final portText = widget.port.text.trim();
+  // text controller
+  TextEditingController addressController = TextEditingController();
+  TextEditingController portController = TextEditingController();
+
+  bool isConnected = false;
+
+  Future<void> checkIP() async {
+    final ip = addressController.text.trim();
+    final portText = portController.text.trim();
 
     final ipRegex = RegExp(
       r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
@@ -30,7 +33,6 @@ class _HomeState extends State<Home> {
 
     if (ip.isEmpty || portText.isEmpty) {
       ShowMessage.show(context, "IP address and port must not be empty.");
-
       return;
     }
 
@@ -44,80 +46,66 @@ class _HomeState extends State<Home> {
       ShowMessage.show(context, "Port must be a number between 0 and 65535.");
       return;
     }
+
     final connectionError = await connectServer(ip, port);
     if (connectionError != null) {
       ShowMessage.show(context, "Connection failed: $connectionError");
       return;
     }
-
-    Navigator.pushNamed(context, "/gamepad");
+    isConnected = true;
   }
+
+  void openController() => Navigator.pushNamed(context, "/gamepad");
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 215, 215, 215),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 215, 215, 215),
+        backgroundColor: backgroundColor,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                isConnected
-                    ? Container(
-                        width: 10.0,
-                        height: 10.0,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                    : Container(
-                        width: 10.0,
-                        height: 10.0,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                SizedBox(width: 10),
-                isConnected ? Text("Connected") : Text("Not Connected"),
-              ],
+            Container(
+              padding: EdgeInsets.fromLTRB(5, 0, 5, 0),
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: isConnected ? Colors.green : Colors.red,
+                shape: BoxShape.circle,
+              ),
             ),
-            isConnected
-                ? TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        disconnectServer();
-                        isConnected = false;
-                      });
-                    },
-                    label: Text("Disconnect"),
-                  )
-                : SizedBox(width: 20),
+            SizedBox(width: 10),
+            Text(
+              isConnected ? "Connected" : "Not Connected",
+              style: TextStyle(
+                fontFamily: "Hanalei",
+                color: wordColor,
+                letterSpacing: 1,
+              ),
+            ),
           ],
         ),
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CardContainer(),
-            Row(
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Row(
               children: [
                 Expanded(
                   flex: 2,
                   child: TextField(
-                    autocorrect: false,
-                    controller: widget.address,
+                    controller: addressController,
+                    keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: "Address",
-                      labelText: "IP Address",
-                      focusColor: Color.fromARGB(255, 20, 20, 20),
-                      border: OutlineInputBorder(),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: extraColor,
+                      hintText: "Address",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
@@ -127,54 +115,98 @@ class _HomeState extends State<Home> {
                 Expanded(
                   flex: 1,
                   child: TextField(
-                    autocorrect: false,
-                    controller: widget.port,
+                    controller: portController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: "Port",
-                      labelText: "Port",
-                      border: OutlineInputBorder(),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: extraColor,
+                      hintText: "Port",
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+          Padding(
+            padding: EdgeInsetsGeometry.fromLTRB(2, 10, 10, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      if (isConnected) {
+                        isConnected = false;
+                        disconnectServer();
+                      } else {
+                        checkIP();
+                      }
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: isConnected ? Colors.red : btnColor,
+                    elevation: 2,
 
-            SizedBox(height: 10),
-
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  checkIP();
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    shadowColor: Colors.black12,
+                  ),
+                  child: Text(
+                    isConnected ? "Disconnect" : "Connect",
+                    style: TextStyle(
+                      fontFamily: "Hanalei",
+                      color: wordColor,
+                      fontSize: 17,
+                    ),
                   ),
                 ),
-                child: Text(
-                  "Connect",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 20, 20, 20),
-                  ),
-                ),
-              ),
+                SizedBox(width: 10),
+                isConnected
+                    ? TextButton(
+                        onPressed: () {
+                          setState(() {
+                            if (isConnected) {
+                              openController();
+                            }
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: btnColor,
+                          elevation: 2,
+
+                          shadowColor: Colors.black12,
+                        ),
+                        child: Text(
+                          "Play",
+                          style: TextStyle(
+                            fontFamily: "Hanalei",
+                            color: wordColor,
+                            fontSize: 17,
+                          ),
+                        ),
+                      )
+                    : Padding(padding: EdgeInsetsGeometry.all(0)),
+              ],
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [],
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Color.fromARGB(255, 39, 63, 79),
 
-        child: Icon(Icons.help, color: Colors.white),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, "/help");
+        },
+        backgroundColor: wordColor,
+        child: Icon(Icons.help_rounded, color: btnColor),
       ),
     );
   }

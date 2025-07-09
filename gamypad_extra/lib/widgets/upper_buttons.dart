@@ -4,93 +4,65 @@ import 'package:gamypad_extra/widgets/buttons.dart';
 class UpperButtons extends StatelessWidget {
   const UpperButtons({super.key});
 
+  static const triggerSize = Size(130, 65);
+  static const smallBtnSize = Size(40, 40);
+  static const guideBtnSize = Size(60, 60);
+
+  Widget _buildTrigger(String label, Color color, {bool isLeft = true}) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isLeft ? 10 : 0, 10, isLeft ? 0 : 20, 0),
+      child: Buttons(label: label, btnColor: color, size: triggerSize),
+    );
+  }
+
+  Widget _buildCenterButton(
+    String label,
+    Color color,
+    Size size, {
+    double right = 10,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(right: right),
+      child: Buttons(label: label, btnColor: color, size: size),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // LT && LB
+        // LT & LB
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(10, 10, 0, 0),
-              child: Buttons(
-                label: "LT",
-                btnColor: Color.fromARGB(255, 40, 40, 40),
-                size: Size(130, 65),
-              ),
-            ),
-
-            SizedBox(height: 5),
-
-            Padding(
-              padding: EdgeInsets.fromLTRB(10, 10, 0, 0),
-              child: Buttons(
-                label: "LB",
-                btnColor: Color.fromARGB(255, 30, 30, 30),
-                size: Size(130, 65),
-              ),
-            ),
+            _buildTrigger("LT", const Color(0xFF282828), isLeft: true),
+            const SizedBox(height: 5),
+            _buildTrigger("LB", const Color(0xFF1E1E1E), isLeft: true),
           ],
         ),
 
-        // Start && Select && Guide
+        // SELECT, GUIDE, START
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 10, 0),
-              child: Buttons(
-                label: "SELECT",
-                btnColor: Color.fromARGB(255, 100, 100, 100),
-                size: Size(40, 40),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 10, 0),
-              child: Buttons(
-                label: "GUIDE",
-                btnColor: Colors.green,
-                size: Size(60, 60),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-              child: Buttons(
-                label: "START",
-                btnColor: Color.fromARGB(255, 70, 70, 70),
-                size: Size(40, 40),
-              ),
+            _buildCenterButton("SELECT", const Color(0xFF646464), smallBtnSize),
+            _buildCenterButton("GUIDE", Colors.green, guideBtnSize),
+            _buildCenterButton(
+              "START",
+              const Color(0xFF464646),
+              smallBtnSize,
+              right: 0,
             ),
           ],
         ),
 
-        // RT && RB
+        // RT & RB
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 10, 20, 0),
-              child: Buttons(
-                label: "RT",
-                btnColor: Color.fromARGB(255, 40, 40, 40),
-                size: Size(130, 65),
-              ),
-            ),
-
-            SizedBox(height: 5),
-
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 10, 20, 0),
-              child: Buttons(
-                label: "RB",
-                btnColor: Color.fromARGB(255, 30, 30, 30),
-                size: Size(130, 65),
-              ),
-            ),
+            _buildTrigger("RT", const Color(0xFF282828), isLeft: false),
+            const SizedBox(height: 5),
+            _buildTrigger("RB", const Color(0xFF1E1E1E), isLeft: false),
           ],
         ),
       ],

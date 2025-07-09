@@ -13,27 +13,6 @@ class Gamepad extends StatefulWidget {
 
 class _GamepadState extends State<Gamepad> {
   @override
-  void initState() {
-    super.initState();
-
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-
-    // Set immersive full screen
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  }
-
-  @override
-  void dispose() {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 20, 20, 20),
@@ -42,8 +21,9 @@ class _GamepadState extends State<Gamepad> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             UpperButtons(),
+
             Padding(
-              padding: EdgeInsets.fromLTRB(10, 0, 0, 13),
+              padding: EdgeInsets.fromLTRB(10, 0, 20, 13),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [Dpad(), Facebutton()],
