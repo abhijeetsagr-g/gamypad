@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_extra/client.dart';
 import 'package:gamypad_extra/widgets/show_message.dart';
+import 'package:gamypad_extra/widgets/card_selector.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -52,7 +53,11 @@ class _HomeState extends State<Home> {
       ShowMessage.show(context, "Connection failed: $connectionError");
       return;
     }
-    isConnected = true;
+
+    // Only set state after successful connection
+    setState(() {
+      isConnected = true;
+    });
   }
 
   void openController() => Navigator.pushNamed(context, "/gamepad");
@@ -75,7 +80,9 @@ class _HomeState extends State<Home> {
                 shape: BoxShape.circle,
               ),
             ),
+
             SizedBox(width: 10),
+
             Text(
               isConnected ? "Connected" : "Not Connected",
               style: TextStyle(
@@ -87,6 +94,7 @@ class _HomeState extends State<Home> {
           ],
         ),
       ),
+
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -137,15 +145,17 @@ class _HomeState extends State<Home> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () {
-                    setState(() {
+                  onPressed: () async {
+                    {
                       if (isConnected) {
-                        isConnected = false;
+                        setState(() {
+                          isConnected = false;
+                        });
                         disconnectServer();
                       } else {
-                        checkIP();
+                        await checkIP(); // this will handle setState internally
                       }
-                    });
+                    }
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: isConnected ? Colors.red : btnColor,
@@ -153,6 +163,7 @@ class _HomeState extends State<Home> {
 
                     shadowColor: Colors.black12,
                   ),
+
                   child: Text(
                     isConnected ? "Disconnect" : "Connect",
                     style: TextStyle(
@@ -162,7 +173,9 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                 ),
+
                 SizedBox(width: 10),
+
                 isConnected
                     ? TextButton(
                         onPressed: () {
@@ -189,13 +202,6 @@ class _HomeState extends State<Home> {
                       )
                     : Padding(padding: EdgeInsetsGeometry.all(0)),
               ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [],
             ),
           ),
         ],

@@ -10,7 +10,7 @@ FORMAT = "utf-8"
 EXIT_CODE = "100"
 
 # Server setup
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = "0.0.0.0"
 PORT = 5050
 
 # Create virtual input device
@@ -53,7 +53,7 @@ def handle_client(addr, conn):
         print(f"[CONNECTION CLOSED] {addr}")
 
 def start_server():
-    print(f"[SERVER STARTED] Listening on {SERVER}:{PORT}")
+    print(f"[SERVER STARTED] Listening on {socket.gethostbyname(socket.gethostname())}:{PORT}")
     server.listen()
 
     while True:
