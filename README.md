@@ -2,6 +2,10 @@
 
 Turn your phone into a wireless game controller for your PC.
 
+![WhatsApp Image 2025-07-19 at 06 34 19 (1)](https://github.com/user-attachments/assets/df5ea188-4aca-42eb-adc4-921522f7171b)
+
+![WhatsApp Image 2025-07-19 at 06 34 19](https://github.com/user-attachments/assets/21605d0e-77df-422c-ab78-c0c490e78faf)
+
 # 🚀 Getting Started
 
 
