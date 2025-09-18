@@ -126,3 +126,22 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# === Native Gamepad library ===
+set(GAMEPAD_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/Gamepad.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/GamepadApi.cpp
+)
+
+add_library(gamepad SHARED ${GAMEPAD_SOURCES})
+
+target_include_directories(gamepad PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts
+)
+
+target_link_libraries(gamepad PRIVATE
+    ${CMAKE_DL_LIBS}
+)
+
+# Link gamepad library into the runner executable
+target_link_libraries(${BINARY_NAME} PRIVATE gamepad)
