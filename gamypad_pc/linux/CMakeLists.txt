@@ -145,3 +145,8 @@ target_link_libraries(gamepad PRIVATE
 
 # Link gamepad library into the runner executable
 target_link_libraries(${BINARY_NAME} PRIVATE gamepad)
+
+# Install libgamepad.so into the bundle's lib directory
+install(TARGETS gamepad
+  LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)

@@ -1,4 +1,3 @@
-// Gamepad.cpp
 #include "Gamepad.h"
 #include <fcntl.h>
 #include <linux/input-event-codes.h>
@@ -24,10 +23,15 @@ Gamepad::Gamepad() {
     {"RT", BTN_TR2},
     {"LB", BTN_TL},
     {"RB", BTN_TR},
+    {"START", BTN_START},
+    {"SELECT", BTN_SELECT},
+    {"LS", BTN_THUMBL},
+    {"RS", BTN_THUMBR},
+    {"GUIDE", BTN_MODE}
     };
     
     enableGamepad();
-
+  
     uinput_setup usetup{};
     usetup.id.bustype = BUS_USB;
     usetup.id.product = 0x6969;

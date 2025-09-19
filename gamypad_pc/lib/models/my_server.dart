@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:gamypad_pc/models/gamepad.dart';
+
 class MyServer {
+  final Gamepad _gamepad = Gamepad();
   final int port;
   ServerSocket? _server;
   String _error = "";
@@ -25,7 +29,7 @@ class MyServer {
       onClientStatusChanged?.call(true);
       client.listen(
         (event) {
-          final data = String.fromCharCodes(event).trim();
+          final data = utf8.decode(event);
           handleClient(data);
         },
         onDone: () {
@@ -49,7 +53,17 @@ class MyServer {
   }
 
   void handleClient(String data) {
-    print("Received: $data");
+    try {
+      final Map<String, dynamic> decoded = jsonDecode(data);
+
+      if (decoded['action'] == 'press') {
+        _gamepad.pressKey(decoded['btn']);
+      } else {
+        _gamepad.releaseKey(decoded['btn']);
+      }
+    } catch (e) {
+      print("Invalid JSON: $data");
+    }
   }
 
   String get address => _server?.address.host ?? "";

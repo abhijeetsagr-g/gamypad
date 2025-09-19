@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gamypad_apk/widgets/joystick.dart';
+import 'package:gamypad_apk/widgets/gamepad.dart';
 
 class GamepadPage extends StatefulWidget {
   const GamepadPage({super.key});
@@ -11,6 +11,6 @@ class GamepadPage extends StatefulWidget {
 class _GamepadPageState extends State<GamepadPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Joystick(isLeftStick: false)));
+    return Scaffold(body: Gamepad());
   }
 }

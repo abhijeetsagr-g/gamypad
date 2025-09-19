@@ -28,7 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  ffi: ^2.1.0
+  ffi: ^2.1.4
   flutter:
     sdk: flutter
 

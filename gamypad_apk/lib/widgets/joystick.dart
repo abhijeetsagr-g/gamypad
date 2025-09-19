@@ -10,8 +10,8 @@ class Joystick extends StatefulWidget {
 
 class _JoystickState extends State<Joystick> {
   Offset _stickOffset = Offset.zero;
-  double _radius = 50; // Outer Cricle Radius
-  double _thumbRadius = 20; // Inner Circle radius
+  final double _radius = 60; // Outer Cricle Radius
+  final double _thumbRadius = 25; // Inner Circle radius
 
   void _onChanged({int? xValue, int? yValue}) {
     String name = widget.isLeftStick ? "Left" : "Right";
@@ -60,7 +60,7 @@ class _JoystickState extends State<Joystick> {
     return GestureDetector(
       onPanUpdate: (details) => _updateStick(details.localPosition),
       onPanEnd: (details) => _resetStick(),
-      child: Container(
+      child: SizedBox(
         width: _radius * 2,
         height: _radius * 2,
         child: Stack(
