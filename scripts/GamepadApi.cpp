@@ -22,7 +22,7 @@ extern "C" {
     }
 
     // Set axis
-    void Gamepad_setAxis(Gamepad* gp, int code, int value) {
-        gp->setAxis(code, value);
+    void Gamepad_setAxis(Gamepad* gp, int type, int valueX, int valueY) {
+        gp->setAxis(type, valueX, valueY);
     }
 }

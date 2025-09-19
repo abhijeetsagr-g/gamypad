@@ -43,9 +43,8 @@ class Client with ChangeNotifier {
   /// Send a Dart map as JSON
   void sendJson(Map<String, dynamic> message) {
     if (_socket != null) {
-      final jsonString = jsonEncode(message) + "\n"; // delimiter
+      final jsonString = "${jsonEncode(message)}\n"; // delimiter
       _socket!.write(jsonString);
-
       print('Sent: $jsonString');
     } else {
       print('Not connected to the server.');

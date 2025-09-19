@@ -56,11 +56,28 @@ class MyServer {
     try {
       final Map<String, dynamic> decoded = jsonDecode(data);
 
-      if (decoded['action'] == 'press') {
-        _gamepad.pressKey(decoded['btn']);
-      } else {
-        _gamepad.releaseKey(decoded['btn']);
+      switch (decoded['action']) {
+        case 'press':
+          _gamepad.pressKey(decoded['btn']);
+        case 'release':
+          _gamepad.releaseKey(decoded['btn']);
+        case 'leftStick':
+          // btn for example will be : {'x' : '1230', 'y' : '1230'}
+          int valueX = int.parse(decoded['btn']['x']);
+          int valueY = int.parse(decoded['btn']['y']);
+          _gamepad.setAxis(1, valueX, valueY);
+        case 'rightStick':
+          // btn for example will be : {'x' : '1230', 'y' : '1230'}
+          int valueX = int.parse(decoded['btn']['x']);
+          int valueY = int.parse(decoded['btn']['y']);
+          _gamepad.setAxis(0, valueX, valueY);
       }
+
+      // if (decoded['action'] == 'press') {
+      //   _gamepad.pressKey(decoded['btn']);
+      // } else {
+      //   _gamepad.releaseKey(decoded['btn']);
+      // }
     } catch (e) {
       print("Invalid JSON: $data");
     }

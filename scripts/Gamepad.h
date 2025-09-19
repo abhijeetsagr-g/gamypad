@@ -10,7 +10,7 @@ public:
 
     void pressKey(const string& key);
     void releaseKey(const string& key);
-    void setAxis(int code, int value);
+    void setAxis(int type, int valueX, int valueY);
 private:
     int fd;
     std::map<string, int> keyMap;

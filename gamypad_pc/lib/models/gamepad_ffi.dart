@@ -10,14 +10,14 @@ typedef _GamepadNewC = Pointer<Void> Function();
 typedef _GamepadDeleteC = Void Function(Pointer<Void>);
 typedef _GamepadPressKeyC = Void Function(Pointer<Void>, Pointer<Utf8>);
 typedef _GamepadReleaseKeyC = Void Function(Pointer<Void>, Pointer<Utf8>);
-typedef _GamepadSetAxisC = Void Function(Pointer<Void>, Int32, Int32);
+typedef _GamepadSetAxisC = Void Function(Pointer<Void>, Int32, Int32, Int32);
 
 // Dart typedefs
 typedef GamepadNew = Pointer<Void> Function();
 typedef GamepadDelete = void Function(Pointer<Void>);
 typedef GamepadPressKey = void Function(Pointer<Void>, Pointer<Utf8>);
 typedef GamepadReleaseKey = void Function(Pointer<Void>, Pointer<Utf8>);
-typedef GamepadSetAxis = void Function(Pointer<Void>, int, int);
+typedef GamepadSetAxis = void Function(Pointer<Void>, int, int, int);
 
 // Use this function to run those C++ functions
 final GamepadNew gamepadNew = _lib.lookupFunction<_GamepadNewC, GamepadNew>(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gamypad_apk/models/client.dart';
+import 'package:provider/provider.dart';
 
 class Joystick extends StatefulWidget {
   const Joystick({super.key, required this.isLeftStick});
@@ -14,8 +16,12 @@ class _JoystickState extends State<Joystick> {
   final double _thumbRadius = 25; // Inner Circle radius
 
   void _onChanged({int? xValue, int? yValue}) {
-    String name = widget.isLeftStick ? "Left" : "Right";
-    print("$name : $xValue, $yValue");
+    String name = widget.isLeftStick ? "leftStick" : "rightStick";
+    final clientProvider = Provider.of<Client>(context, listen: false);
+    clientProvider.sendJson({
+      'action': name,
+      'btn': {'x': xValue.toString(), 'y': yValue.toString()},
+    });
   }
 
   void _updateStick(Offset details) {
@@ -42,7 +48,7 @@ class _JoystickState extends State<Joystick> {
     // normalized = Offset(-1..1, -1..1)
     final int maxRange = 32767;
     final int xValue = (normalized.dx * maxRange).toInt();
-    final int yValue = (-normalized.dy * maxRange).toInt();
+    final int yValue = (normalized.dy * maxRange).toInt();
 
     _onChanged(xValue: xValue, yValue: yValue);
     setState(() {});

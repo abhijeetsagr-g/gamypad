@@ -27,7 +27,7 @@ Gamepad::Gamepad() {
     {"SELECT", BTN_SELECT},
     {"LS", BTN_THUMBL},
     {"RS", BTN_THUMBR},
-    {"GUIDE", BTN_MODE}
+    {"GUIDE", KEY_HOMEPAGE}
     };
     
     enableGamepad();
@@ -131,8 +131,14 @@ void Gamepad::releaseKey(const std::string& key) {
     emit(EV_SYN, SYN_REPORT, 0);
 }
 
-void Gamepad::setAxis(int code, int value) {
-    emit(EV_ABS, code, value);
-    emit(EV_SYN, SYN_REPORT, 0);
+// Type = 1 -> left stick or 0 = right stick. X and Y are axes
+void Gamepad::setAxis(int type, int valueX, int valueY) {
+    if (type == 1) { // left stick
+        emit(EV_ABS, ABS_X, valueX);
+        emit(EV_ABS, ABS_Y, valueY);
+    } else { // right stick
+        emit(EV_ABS, ABS_RX, valueX);
+        emit(EV_ABS, ABS_RY, valueY);
+    }
+    emit(EV_SYN, SYN_REPORT, 0); // flush events
 }
-

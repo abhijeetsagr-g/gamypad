@@ -19,8 +19,8 @@ class Gamepad {
     calloc.free(keyC);
   }
 
-  void setAxis(int code, int value) {
-    gamepadSetAxis(_handle, code, value);
+  void setAxis(int type, int valueX, int valueY) {
+    gamepadSetAxis(_handle, type, valueX, valueY);
   }
 
   void dispose() {
