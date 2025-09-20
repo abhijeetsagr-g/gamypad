@@ -1,16 +1,16 @@
-# gamypad_apk
+## Gamypad Andriod App
+- Use alongside the Desktop Application.
 
-A new Flutter project.
+### models/
+- *client.dart* handles connection with sockets and saves the function to send json.
 
-## Getting Started
+### widgets/
+- *gamepad.dart* actual design of button ui, will be changed in future.
+- *gamepad_button.dart* handles button press/release with the help of client class. Also the design of a single Button.
+- *joystick.dart* joystick, my head hurts when I read that code.
 
-This project is a starting point for a Flutter application.
+### pages/
+- *home_page.dart* handles the address/port input with socket connection.
+- *gamepad_page.dart*
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
