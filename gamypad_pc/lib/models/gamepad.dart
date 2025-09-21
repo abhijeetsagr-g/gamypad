@@ -23,6 +23,13 @@ class Gamepad {
     gamepadSetAxis(_handle, type, valueX, valueY);
   }
 
+  // 1 is press, 0 is release
+  void setTrigger(int code, int value) {
+    int sendValue = value == 1 ? 255 : 0;
+    print(sendValue);
+    gamepadSetTrigger(_handle, code, sendValue);
+  }
+
   void dispose() {
     gamepadDelete(_handle);
   }

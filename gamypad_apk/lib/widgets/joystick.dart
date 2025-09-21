@@ -12,8 +12,8 @@ class Joystick extends StatefulWidget {
 
 class _JoystickState extends State<Joystick> {
   Offset _stickOffset = Offset.zero;
-  final double _radius = 60; // Outer Cricle Radius
-  final double _thumbRadius = 25; // Inner Circle radius
+  final double _radius = 60; // Outer Circle Radius
+  final double _thumbRadius = 25; // Inner Circle Radius
 
   void _onChanged({int? xValue, int? yValue}) {
     String name = widget.isLeftStick ? "leftStick" : "rightStick";
@@ -28,25 +28,46 @@ class _JoystickState extends State<Joystick> {
     final Offset offset = details - Offset(_radius, _radius);
     final double distance = offset.distance;
 
-    if (distance < _radius - _thumbRadius) {
-      _stickOffset = offset;
+    // Allow stick to go beyond outer circle
+    final double limitFactor = 1.3; // 30% beyond outer circle
+    final double maxDis = _radius * limitFactor;
+
+    Offset target;
+    if (distance < maxDis) {
+      target = offset;
     } else {
-      // Clamp thumb inside Circle
-      _stickOffset = Offset.fromDirection(
-        offset.direction,
-        _radius - _thumbRadius,
-      );
+      target = Offset.fromDirection(offset.direction, maxDis);
     }
 
-    // normalize values (-1 to 1)
-    final double maxDis = _radius - _thumbRadius;
-    final Offset normalized = Offset(
+    // Smooth interpolation
+    _stickOffset = Offset.lerp(_stickOffset, target, 0.2)!;
+
+    // Normalize based on maxDis
+    Offset normalized = Offset(
       _stickOffset.dx / maxDis,
       _stickOffset.dy / maxDis,
     );
 
-    // normalized = Offset(-1..1, -1..1)
-    final int maxRange = 32767;
+    // Clamp to [-1, 1]
+    normalized = Offset(
+      normalized.dx.clamp(-1.0, 1.0),
+      normalized.dy.clamp(-1.0, 1.0),
+    );
+
+    // Deadzone
+    const double deadzone = 0.1;
+    if (normalized.distance < deadzone) {
+      normalized = Offset.zero;
+    }
+
+    // Curved sensitivity (quadratic scaling for precision near center)
+    normalized = Offset(
+      normalized.dx.abs() * normalized.dx,
+      normalized.dy.abs() * normalized.dy,
+    );
+
+    // Scale to joystick int range
+    const int maxRange = 32767;
     final int xValue = (normalized.dx * maxRange).toInt();
     final int yValue = (normalized.dy * maxRange).toInt();
 
@@ -81,7 +102,7 @@ class _JoystickState extends State<Joystick> {
                 border: Border.all(color: Colors.blue.shade300, width: 2),
               ),
             ),
-            // inner circle
+            // Inner thumb
             Transform.translate(
               offset: _stickOffset,
               child: Container(

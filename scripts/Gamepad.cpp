@@ -19,24 +19,24 @@ Gamepad::Gamepad() {
     {"DOWN", BTN_DPAD_DOWN},
     {"LEFT", BTN_DPAD_LEFT},
     {"RIGHT", BTN_DPAD_RIGHT},
-    {"LT", BTN_TL2},
-    {"RT", BTN_TR2},
     {"LB", BTN_TL},
     {"RB", BTN_TR},
     {"START", BTN_START},
     {"SELECT", BTN_SELECT},
     {"LS", BTN_THUMBL},
     {"RS", BTN_THUMBR},
-    {"GUIDE", KEY_HOMEPAGE}
+    {"GUIDE", BTN_MODE}
     };
     
     enableGamepad();
   
     uinput_setup usetup{};
     usetup.id.bustype = BUS_USB;
-    usetup.id.product = 0x6969;
-    usetup.id.vendor = 0x4420;
-    snprintf(usetup.name, UINPUT_MAX_NAME_SIZE, "Gamypad");
+    
+    usetup.id.vendor  = 0x045e;  // Microsoft
+    usetup.id.product = 0x028e;  // Xbox 360 Controller
+    strncpy(usetup.name, "Gamypad", UINPUT_MAX_NAME_SIZE);
+
     ioctl(fd, UI_DEV_SETUP, &usetup);
     ioctl(fd, UI_DEV_CREATE);
     sleep(1);
@@ -108,7 +108,27 @@ void Gamepad::enableGamepad() {
     abs_ry.absinfo.fuzz = ABS_FUZZ;
     abs_ry.absinfo.value = ABS_VALUE;
     ioctl(fd, UI_ABS_SETUP, &abs_ry);
-    
+
+    // Left Trigger (ABS_Z)
+    uinput_abs_setup abs_z {};
+    abs_z.code = ABS_Z;
+    abs_z.absinfo.minimum = 0;
+    abs_z.absinfo.maximum = 255;
+    abs_z.absinfo.flat = 0;
+    abs_z.absinfo.fuzz = 0;
+    abs_z.absinfo.value = 0;
+    ioctl(fd, UI_ABS_SETUP, &abs_z);
+
+    // Right Trigger (ABS_RZ)
+    uinput_abs_setup abs_rz {};
+    abs_rz.code = ABS_RZ;
+    abs_rz.absinfo.minimum = 0;
+    abs_rz.absinfo.maximum = 255;
+    abs_rz.absinfo.flat = 0;
+    abs_rz.absinfo.fuzz = 0;
+    abs_rz.absinfo.value = 0;
+    ioctl(fd, UI_ABS_SETUP, &abs_rz);
+
 }
 
 void Gamepad::emit(int type, int code, int value) {
@@ -141,4 +161,11 @@ void Gamepad::setAxis(int type, int valueX, int valueY) {
         emit(EV_ABS, ABS_RY, valueY);
     }
     emit(EV_SYN, SYN_REPORT, 0); // flush events
+}
+
+
+void Gamepad::setTrigger(int type, int value) {
+    int code = type == 1 ? ABS_Z : ABS_RZ;
+    emit(EV_ABS, code, value);
+    emit(EV_SYN, SYN_REPORT, 0);
 }

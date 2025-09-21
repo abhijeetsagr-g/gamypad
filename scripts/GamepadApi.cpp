@@ -25,4 +25,9 @@ extern "C" {
     void Gamepad_setAxis(Gamepad* gp, int type, int valueX, int valueY) {
         gp->setAxis(type, valueX, valueY);
     }
+
+    // set triggers
+    void Gamepad_setTrigger(Gamepad* gp, int code, int value) {
+        gp->setTrigger(code, value);
+    }
 }

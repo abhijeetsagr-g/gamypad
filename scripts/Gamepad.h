@@ -11,6 +11,7 @@ public:
     void pressKey(const string& key);
     void releaseKey(const string& key);
     void setAxis(int type, int valueX, int valueY);
+    void setTrigger(int code, int value);
 private:
     int fd;
     std::map<string, int> keyMap;

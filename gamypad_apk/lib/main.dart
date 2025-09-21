@@ -29,7 +29,11 @@ class _MyAppState extends State<MyApp> {
       create: (BuildContext context) => Client(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark(),
+        theme: ThemeData.dark().copyWith(
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
+          ),
+        ),
         initialRoute: '/',
         routes: {
           '/': (context) => HomePage(),

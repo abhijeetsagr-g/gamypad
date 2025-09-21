@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:gamypad_apk/models/client.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +27,10 @@ class _GamepadButtonState extends State<GamepadButton> {
     setState(() {
       isPressed = true;
     });
+    if (widget.btnCode == 'RT' || widget.btnCode == 'LT') {
+      clientProvider.sendJson({"action": widget.btnCode, "btn": "1"});
+      return;
+    }
     clientProvider.sendJson({"action": "press", "btn": widget.btnCode});
   }
 
@@ -36,6 +38,10 @@ class _GamepadButtonState extends State<GamepadButton> {
     setState(() {
       isPressed = false;
     });
+    if (widget.btnCode == 'RT' || widget.btnCode == 'LT') {
+      clientProvider.sendJson({"action": widget.btnCode, "btn": "0"});
+      return;
+    }
     clientProvider.sendJson({"action": "release", "btn": widget.btnCode});
   }
 

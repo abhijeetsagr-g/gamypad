@@ -18,6 +18,7 @@ class _GamepadState extends State<Gamepad> {
         children: [
           // Top row: LT, LB, Guide, RB, RT
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: const [
               GamepadButton(
                 btnName: "LT",
@@ -32,21 +33,21 @@ class _GamepadState extends State<Gamepad> {
                 height: 40,
                 btnCode: "LB",
               ),
-              SizedBox(width: 40),
+              SizedBox(width: 20),
               GamepadButton(
                 btnName: "Guide",
                 width: 120,
                 height: 40,
                 btnCode: "GUIDE",
               ),
-              SizedBox(width: 50),
+              SizedBox(width: 20),
               GamepadButton(
                 btnName: "RB",
                 width: 140,
                 height: 40,
                 btnCode: "RB",
               ),
-              SizedBox(width: 20),
+              SizedBox(width: 10),
               GamepadButton(
                 btnName: "RT",
                 width: 140,
@@ -70,7 +71,7 @@ class _GamepadState extends State<Gamepad> {
                     const SizedBox(height: 40),
                     // D-Pad
                     Column(
-                      children: [
+                      children: const [
                         GamepadButton(
                           btnName: "",
                           width: 120,
@@ -80,7 +81,7 @@ class _GamepadState extends State<Gamepad> {
 
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             GamepadButton(
                               btnName: "",
                               width: 120,
@@ -161,7 +162,7 @@ class _GamepadState extends State<Gamepad> {
                           btnName: "Y",
                           width: 100,
                           height: 60,
-                          btnCode: "X",
+                          btnCode: "Y",
                         ),
                         const SizedBox(height: 10),
                         // X left + B right
@@ -172,7 +173,7 @@ class _GamepadState extends State<Gamepad> {
                               btnName: "X",
                               width: 100,
                               height: 60,
-                              btnCode: "Y",
+                              btnCode: "X",
                             ),
                             SizedBox(width: 60),
                             GamepadButton(

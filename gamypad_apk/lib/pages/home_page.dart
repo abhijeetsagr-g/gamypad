@@ -20,10 +20,17 @@ class _HomePageState extends State<HomePage> {
 
   void onDisconnect() {
     showFloatingSnackbar(context, "Disconnected");
+    clientProvider.disconnect();
   }
 
-  void onError(error) {
+  void onError(dynamic error) {
     showFloatingSnackbar(context, error.toString());
+  }
+
+  void goToGamepad() {
+    errorMessage = "";
+    FocusScope.of(context).unfocus();
+    Navigator.pushNamed(context, "/gamepad");
   }
 
   Future<void> connect() async {
@@ -42,7 +49,7 @@ class _HomePageState extends State<HomePage> {
       _addressController.clear();
       _portController.clear();
 
-      Navigator.pushNamed(context, '/gamepad');
+      goToGamepad();
     } on SocketException catch (e) {
       setState(() {
         errorMessage = e.message;
@@ -77,17 +84,6 @@ class _HomePageState extends State<HomePage> {
               ? " Connected to ${clientProvider.client?.remoteAddress.address}:${clientProvider.client?.remotePort}"
               : "Gamypad",
         ),
-        actions: [
-          isConnected
-              ? ElevatedButton(
-                  onPressed: () => clientProvider.disconnect(),
-                  child: Text("Disconnect"),
-                )
-              : ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/gamepad'),
-                  child: Text("Gamepad"),
-                ),
-        ],
       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,
@@ -103,6 +99,21 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           if (errorMessage.isNotEmpty) Text(errorMessage),
+          SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                ElevatedButton(onPressed: goToGamepad, child: Text("Gamepad")),
+                const SizedBox(width: 10),
+                if (isConnected)
+                  ElevatedButton(
+                    onPressed: onDisconnect,
+                    child: Text("Disconnect"),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

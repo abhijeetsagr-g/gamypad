@@ -27,25 +27,27 @@ class MyServer {
 
       _client = client;
       onClientStatusChanged?.call(true);
-      client.listen(
-        (event) {
-          final data = utf8.decode(event);
-          handleClient(data);
-        },
-        onDone: () {
-          _client = null;
-          onClientStatusChanged?.call(false);
-        },
-        onError: (err) {
-          _error = err.toString();
-          _client = null;
-          onClientStatusChanged?.call(false);
-        },
-      );
+      client
+          .cast<List<int>>() // ensure the stream is List<int>
+          .transform(utf8.decoder) // decode bytes → string
+          .transform(const LineSplitter()) // split by \n
+          .listen(
+            (line) => handleClient(line),
+            onDone: () {
+              _client = null;
+              onClientStatusChanged?.call(false);
+            },
+            onError: (err) {
+              _error = err.toString();
+              _client = null;
+              onClientStatusChanged?.call(false);
+            },
+          );
     });
   }
 
   Future<void> stop() async {
+    _gamepad.dispose();
     await _client?.close();
     _client = null;
     await _server?.close();
@@ -59,27 +61,32 @@ class MyServer {
       switch (decoded['action']) {
         case 'press':
           _gamepad.pressKey(decoded['btn']);
+          break;
         case 'release':
           _gamepad.releaseKey(decoded['btn']);
+          break;
         case 'leftStick':
           // btn for example will be : {'x' : '1230', 'y' : '1230'}
           int valueX = int.parse(decoded['btn']['x']);
           int valueY = int.parse(decoded['btn']['y']);
           _gamepad.setAxis(1, valueX, valueY);
+          break;
         case 'rightStick':
           // btn for example will be : {'x' : '1230', 'y' : '1230'}
           int valueX = int.parse(decoded['btn']['x']);
           int valueY = int.parse(decoded['btn']['y']);
           _gamepad.setAxis(0, valueX, valueY);
-      }
+          break;
+        case 'RT':
+          int value = int.parse(decoded['btn']);
+          _gamepad.setTrigger(0, value);
 
-      // if (decoded['action'] == 'press') {
-      //   _gamepad.pressKey(decoded['btn']);
-      // } else {
-      //   _gamepad.releaseKey(decoded['btn']);
-      // }
+        case 'LT':
+          int value = int.parse(decoded['btn']);
+          _gamepad.setTrigger(1, value);
+      }
     } catch (e) {
-      print("Invalid JSON: $data");
+      print("Invalid JSON: $data ,error : $e");
     }
   }
 
