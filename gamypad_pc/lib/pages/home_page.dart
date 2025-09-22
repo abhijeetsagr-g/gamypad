@@ -71,6 +71,12 @@ class _HomePageState extends State<HomePage> {
     server = MyServer();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+    server.stop();
+  }
+
   List<Widget> onServerOff() {
     return [
       Text(
