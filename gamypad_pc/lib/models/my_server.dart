@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:gamypad_pc/models/gamepad.dart';
 
 class MyServer {
-  final Gamepad _gamepad = Gamepad();
+  Gamepad? _gamepad = Gamepad();
   final int port;
   ServerSocket? _server;
   String _error = "";
@@ -15,7 +15,13 @@ class MyServer {
   void Function(bool connected)? onClientStatusChanged;
 
   Future<void> start() async {
-    _server = await ServerSocket.bind(InternetAddress.anyIPv4, port);
+    _gamepad = Gamepad();
+    try {
+      _server = await ServerSocket.bind(InternetAddress.anyIPv4, port);
+    } on SocketException catch (e) {
+      _error = e.message;
+      return;
+    }
 
     _server?.listen((client) {
       if (_client != null) {
@@ -47,10 +53,12 @@ class MyServer {
   }
 
   Future<void> stop() async {
-    _gamepad.dispose();
+    _gamepad?.dispose();
+    _gamepad = null;
     await _client?.close();
     _client = null;
     await _server?.close();
+    _server = null;
     onClientStatusChanged?.call(false);
   }
 
@@ -60,30 +68,31 @@ class MyServer {
 
       switch (decoded['action']) {
         case 'press':
-          _gamepad.pressKey(decoded['btn']);
+          _gamepad?.pressKey(decoded['btn']);
           break;
         case 'release':
-          _gamepad.releaseKey(decoded['btn']);
+          _gamepad?.releaseKey(decoded['btn']);
           break;
         case 'leftStick':
           // btn for example will be : {'x' : '1230', 'y' : '1230'}
           int valueX = int.parse(decoded['btn']['x']);
           int valueY = int.parse(decoded['btn']['y']);
-          _gamepad.setAxis(1, valueX, valueY);
+          _gamepad?.setAxis(1, valueX, valueY);
           break;
         case 'rightStick':
           // btn for example will be : {'x' : '1230', 'y' : '1230'}
           int valueX = int.parse(decoded['btn']['x']);
           int valueY = int.parse(decoded['btn']['y']);
-          _gamepad.setAxis(0, valueX, valueY);
+          _gamepad?.setAxis(0, valueX, valueY);
           break;
         case 'RT':
           int value = int.parse(decoded['btn']);
-          _gamepad.setTrigger(0, value);
-
+          _gamepad?.setTrigger(0, value);
+          break;
         case 'LT':
           int value = int.parse(decoded['btn']);
-          _gamepad.setTrigger(1, value);
+          _gamepad?.setTrigger(1, value);
+          break;
       }
     } catch (e) {
       print("Invalid JSON: $data ,error : $e");

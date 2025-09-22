@@ -36,6 +36,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> turnServerOn() async {
     try {
       await server.start();
+      if (server.errorMessage.isNotEmpty) {
+        setState(() {
+          errorMessage = server.errorMessage;
+        });
+        return;
+      }
+
       ip = await getLocalIpAddress();
       setState(() {
         isServerOn = true;

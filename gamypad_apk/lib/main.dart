@@ -1,32 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gamypad_apk/models/client.dart';
+import 'package:gamypad_apk/models/settings.dart';
 import 'package:gamypad_apk/pages/gamepad_page.dart';
 import 'package:gamypad_apk/pages/home_page.dart';
+import 'package:gamypad_apk/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final settings = Settings();
+  await settings.loadSettings();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  runApp(MyApp());
-}
-
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (BuildContext context) => Client(),
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => Client()),
+        ChangeNotifierProvider(create: (context) => settings),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark().copyWith(
@@ -38,8 +35,9 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/': (context) => HomePage(),
           '/gamepad': (context) => GamepadPage(),
+          '/settings': (context) => SettingsPage(),
         },
       ),
-    );
-  }
+    ),
+  );
 }

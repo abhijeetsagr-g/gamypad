@@ -22,6 +22,7 @@ class _JoystickState extends State<Joystick> {
       'action': name,
       'btn': {'x': xValue.toString(), 'y': yValue.toString()},
     });
+    // print("$name, $xValue : $yValue");
   }
 
   void _updateStick(Offset details) {

@@ -45,9 +45,9 @@ class Client with ChangeNotifier {
     if (_socket != null) {
       final jsonString = "${jsonEncode(message)}\n"; // delimiter
       _socket!.write(jsonString);
-      print('Sent: $jsonString');
+      // print('Sent: $jsonString');
     } else {
-      print('Not connected to the server.');
+      // print('Not connected to the server.');
     }
   }
 

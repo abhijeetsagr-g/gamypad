@@ -27,10 +27,14 @@ class _HomePageState extends State<HomePage> {
     showFloatingSnackbar(context, error.toString());
   }
 
-  void goToGamepad() {
+  // Change current page to gamepad
+  void goToNewPage(String page) {
     errorMessage = "";
     FocusScope.of(context).unfocus();
-    Navigator.pushNamed(context, "/gamepad");
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushNamed(context, page);
+    });
   }
 
   Future<void> connect() async {
@@ -49,9 +53,10 @@ class _HomePageState extends State<HomePage> {
       _addressController.clear();
       _portController.clear();
 
-      goToGamepad();
+      goToNewPage("/gamepad");
     } on SocketException catch (e) {
       setState(() {
+        print(e);
         errorMessage = e.message;
       });
     }
@@ -84,6 +89,12 @@ class _HomePageState extends State<HomePage> {
               ? " Connected to ${clientProvider.client?.remoteAddress.address}:${clientProvider.client?.remotePort}"
               : "Gamypad",
         ),
+        actions: [
+          IconButton(
+            onPressed: () => goToNewPage("/settings"),
+            icon: Icon(Icons.settings),
+          ),
+        ],
       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,
@@ -104,7 +115,10 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                ElevatedButton(onPressed: goToGamepad, child: Text("Gamepad")),
+                ElevatedButton(
+                  onPressed: () => goToNewPage("/gamepad"),
+                  child: Text("Gamepad"),
+                ),
                 const SizedBox(width: 10),
                 if (isConnected)
                   ElevatedButton(

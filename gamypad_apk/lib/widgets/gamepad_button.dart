@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_apk/models/client.dart';
+import 'package:gamypad_apk/models/settings.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 class GamepadButton extends StatefulWidget {
   const GamepadButton({
@@ -24,6 +26,12 @@ class _GamepadButtonState extends State<GamepadButton> {
   late final clientProvider = Provider.of<Client>(context, listen: false);
 
   void onPress() {
+    final settings = Provider.of<Settings>(context, listen: false);
+
+    if (settings.isVibrateOn) {
+      HapticFeedback.vibrate();
+    }
+
     setState(() {
       isPressed = true;
     });

@@ -14,3 +14,10 @@
 
 ## Installation
 `working on it`
+
+
+## TO DO
+- [ ] Fix Error with Joystick
+- [ ] Fix Dpad Button
+- [ ] Add Sticky Dpad
+- [ ] Write Installation Steps

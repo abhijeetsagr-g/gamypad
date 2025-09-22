@@ -1,4 +1,4 @@
-package com.example.gamypad_apk
+package com.vansg.gamypad
 
 import io.flutter.embedding.android.FlutterActivity
 
