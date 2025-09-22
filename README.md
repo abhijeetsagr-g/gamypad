@@ -17,7 +17,7 @@
 
 
 ## TO DO
-- [ ] Fix Error with Joystick
-- [ ] Fix Dpad Button
+- [X] Fix Error with Joystick
+- [X] Fix Dpad Button
 - [ ] Add Sticky Dpad
 - [ ] Write Installation Steps
