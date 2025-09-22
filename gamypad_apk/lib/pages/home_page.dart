@@ -86,7 +86,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text(
           isConnected
-              ? " Connected to ${clientProvider.client?.remoteAddress.address}:${clientProvider.client?.remotePort}"
+              ? " Connected to ${clientProvider.address}:${clientProvider.port}"
               : "Gamypad",
         ),
         actions: [

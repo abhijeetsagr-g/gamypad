@@ -4,57 +4,38 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class Client with ChangeNotifier {
-  Socket? _socket;
-  bool _isConnected = false;
+  RawDatagramSocket? _client;
+  InternetAddress? _address;
+  int _port = 0;
+  bool get isConnected => _client != null;
 
-  // Callbacks that can be assigned from the UI/Provider
+  void Function(String error)? onError;
   void Function()? onDisconnected;
-  void Function(Object error)? onError;
 
-  bool get isConnected => _isConnected;
-  Socket? get client => _socket;
-
+  // Initialize the UDP Client
   Future<void> connect(String host, int port) async {
-    _socket = await Socket.connect(host, port);
-    _isConnected = _socket != null;
-    notifyListeners();
+    _address = InternetAddress(host);
+    _port = port;
 
-    // Listen for incoming data from the server
-    _socket!.listen(
-      (data) {
-        final msg = utf8.decode(data).trim();
-        print("Server: $msg");
-      },
-      onError: (error) {
-        _isConnected = false;
-        onError?.call(error);
-        notifyListeners();
-        disconnect();
-      },
-      onDone: () {
-        _isConnected = false;
-        onDisconnected?.call();
-        notifyListeners();
-        disconnect();
-      },
-    );
+    _client = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+    notifyListeners();
   }
 
-  /// Send a Dart map as JSON
+  // Send a Map as json over UDP
   void sendJson(Map<String, dynamic> message) {
-    if (_socket != null) {
-      final jsonString = "${jsonEncode(message)}\n"; // delimiter
-      _socket!.write(jsonString);
-      // print('Sent: $jsonString');
-    } else {
-      // print('Not connected to the server.');
+    if (_client != null && _address != null) {
+      final jsonString = jsonEncode(message);
+      _client!.send(utf8.encode(jsonString), _address!, _port);
     }
   }
 
-  Future<void> disconnect() async {
-    await _socket?.close();
-    _socket = null;
-    _isConnected = false;
+  // Disconnect
+  void disconnect() {
+    _client?.close();
+    _client = null;
     notifyListeners();
   }
+
+  String? get address => _address?.address;
+  int? get port => _port;
 }

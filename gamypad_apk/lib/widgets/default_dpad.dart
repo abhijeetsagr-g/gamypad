@@ -9,7 +9,6 @@ class DefaultDpad extends StatelessWidget {
     return Column(
       children: const [
         GamepadButton(btnName: "", width: 120, height: 40, btnCode: "UP"),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

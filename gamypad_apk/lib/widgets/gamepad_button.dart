@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:gamypad_apk/widgets/my_widgets.dart';
+
+import 'package:provider/provider.dart';
+
 import 'package:gamypad_apk/models/client.dart';
 import 'package:gamypad_apk/models/settings.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/services.dart';
 
 class GamepadButton extends StatefulWidget {
   const GamepadButton({
@@ -25,32 +28,61 @@ class _GamepadButtonState extends State<GamepadButton> {
   bool isPressed = false;
   late final clientProvider = Provider.of<Client>(context, listen: false);
 
-  void onPress() {
-    final settings = Provider.of<Settings>(context, listen: false);
+  // on Error
+  void onError(dynamic msg) {
+    showFloatingSnackbar(context, msg);
+  }
 
-    if (settings.isVibrateOn) {
+  // get info from Settings Provider
+  late bool canVibrate;
+  @override
+  void initState() {
+    super.initState();
+    canVibrate = Provider.of<Settings>(context, listen: false).isVibrateOn;
+    clientProvider.onError = (msg) => onError(msg);
+  }
+
+  // Trigger Actions
+  void onTriggerPress() {
+    clientProvider.sendJson({"action": widget.btnCode, "btn": "1"});
+  }
+
+  void onTriggerRelease() {
+    clientProvider.sendJson({"action": widget.btnCode, "btn": "0"});
+  }
+
+  void sendInput(String action) {
+    clientProvider.sendJson({"action": action, "btn": widget.btnCode});
+  }
+
+  void onPress() {
+    // check if needed to vibrate
+    if (canVibrate) {
       HapticFeedback.vibrate();
     }
-
     setState(() {
       isPressed = true;
     });
+
+    // send Action based on btncode
     if (widget.btnCode == 'RT' || widget.btnCode == 'LT') {
-      clientProvider.sendJson({"action": widget.btnCode, "btn": "1"});
+      onTriggerPress();
       return;
     }
-    clientProvider.sendJson({"action": "press", "btn": widget.btnCode});
+    sendInput("press");
   }
 
   void onRelease() {
     setState(() {
       isPressed = false;
     });
+
+    // send Action based on btncode
     if (widget.btnCode == 'RT' || widget.btnCode == 'LT') {
-      clientProvider.sendJson({"action": widget.btnCode, "btn": "0"});
+      onTriggerRelease();
       return;
     }
-    clientProvider.sendJson({"action": "release", "btn": widget.btnCode});
+    sendInput("release");
   }
 
   @override
@@ -62,9 +94,8 @@ class _GamepadButtonState extends State<GamepadButton> {
         elevation: 4,
         color: isPressed ? Colors.grey : Colors.grey[900],
         child: Listener(
-          onPointerDown: (_) => onPress(),
-          onPointerUp: (_) => onRelease(),
-          onPointerCancel: (_) => onRelease(),
+          onPointerDown: (_) => onPress(), // When finger touches the screen
+          onPointerUp: (_) => onRelease(), // When finger is lifted up
           behavior: HitTestBehavior.translucent,
           child: Center(child: Text(widget.btnName)),
         ),
