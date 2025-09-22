@@ -129,6 +129,27 @@ void Gamepad::enableGamepad() {
     abs_rz.absinfo.value = 0;
     ioctl(fd, UI_ABS_SETUP, &abs_rz);
 
+    // D-pad horizontal (X) and vertical (Y)
+    ioctl(fd, UI_SET_ABSBIT, ABS_HAT0X);
+    ioctl(fd, UI_SET_ABSBIT, ABS_HAT0Y);
+
+    uinput_abs_setup abs_hatx{};
+    abs_hatx.code = ABS_HAT0X;
+    abs_hatx.absinfo.minimum = -1;
+    abs_hatx.absinfo.maximum = 1;
+    abs_hatx.absinfo.flat = 0;
+    abs_hatx.absinfo.fuzz = 0;
+    abs_hatx.absinfo.value = 0;
+    ioctl(fd, UI_ABS_SETUP, &abs_hatx);
+
+    uinput_abs_setup abs_haty{};
+    abs_haty.code = ABS_HAT0Y;
+    abs_haty.absinfo.minimum = -1;
+    abs_haty.absinfo.maximum = 1;
+    abs_haty.absinfo.flat = 0;
+    abs_haty.absinfo.fuzz = 0;
+    abs_haty.absinfo.value = 0;
+    ioctl(fd, UI_ABS_SETUP, &abs_haty);
 }
 
 void Gamepad::emit(int type, int code, int value) {
@@ -162,6 +183,15 @@ void Gamepad::setAxis(int type, int valueX, int valueY) {
     }
     emit(EV_SYN, SYN_REPORT, 0); // flush events
 }
+
+// xValue: -1 = LEFT, 0 = neutral, 1 = RIGHT
+// yValue: -1 = UP, 0 = neutral, 1 = DOWN
+void Gamepad::setDpad(int xValue, int yValue) {
+    emit(EV_ABS, ABS_HAT0X, xValue);
+    emit(EV_ABS, ABS_HAT0Y, yValue);
+    emit(EV_SYN, SYN_REPORT, 0);
+}
+
 
 
 void Gamepad::setTrigger(int type, int value) {

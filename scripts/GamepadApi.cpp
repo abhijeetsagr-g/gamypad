@@ -30,4 +30,9 @@ extern "C" {
     void Gamepad_setTrigger(Gamepad* gp, int code, int value) {
         gp->setTrigger(code, value);
     }
+
+    void Gamepad_setDpad(Gamepad* gp, int xValue, int yValue) {
+        gp->setDpad(xValue, yValue);
+    }
+
 }

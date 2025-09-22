@@ -12,6 +12,7 @@ public:
     void releaseKey(const string& key);
     void setAxis(int type, int valueX, int valueY);
     void setTrigger(int code, int value);
+    void setDpad(int xValue, int yValue);
 private:
     int fd;
     std::map<string, int> keyMap;
