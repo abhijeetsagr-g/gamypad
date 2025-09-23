@@ -39,7 +39,6 @@ class _GamepadButtonState extends State<GamepadButton> {
   void initState() {
     super.initState();
     canVibrate = Provider.of<Settings>(context, listen: false).isVibrateOn;
-    clientProvider.onError = (msg) => onError(msg);
   }
 
   // Trigger Actions

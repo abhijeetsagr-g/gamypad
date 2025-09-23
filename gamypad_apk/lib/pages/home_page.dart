@@ -19,12 +19,7 @@ class _HomePageState extends State<HomePage> {
   String errorMessage = "";
 
   void onDisconnect() {
-    showFloatingSnackbar(context, "Disconnected");
     clientProvider.disconnect();
-  }
-
-  void onError(dynamic error) {
-    showFloatingSnackbar(context, error.toString());
   }
 
   // Change current page to gamepad
@@ -56,14 +51,19 @@ class _HomePageState extends State<HomePage> {
       goToNewPage("/gamepad");
     } on SocketException catch (e) {
       setState(() {
-        print(e);
         errorMessage = e.message;
       });
     }
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   void dispose() {
+    clientProvider.disconnect();
     _addressController.dispose();
     _portController.dispose();
     super.dispose();
@@ -80,8 +80,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     bool isConnected = clientProvider.isConnected;
-    clientProvider.onDisconnected = () => onDisconnect();
-    clientProvider.onError = (error) => onError(error);
+    clientProvider.onDisconnected = () =>
+        showFloatingSnackbar(context, "Disconnected");
     return Scaffold(
       appBar: AppBar(
         title: Text(

@@ -9,7 +9,6 @@ class Client with ChangeNotifier {
   int _port = 0;
   bool get isConnected => _client != null;
 
-  void Function(String error)? onError;
   void Function()? onDisconnected;
 
   // Initialize the UDP Client
@@ -32,6 +31,7 @@ class Client with ChangeNotifier {
   // Disconnect
   void disconnect() {
     _client?.close();
+    onDisconnected?.call();
     _client = null;
     notifyListeners();
   }
