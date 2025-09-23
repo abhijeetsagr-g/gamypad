@@ -75,6 +75,7 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     super.dispose();
     server.stop();
+    server.deleteGamepad();
   }
 
   List<Widget> onServerOff() {

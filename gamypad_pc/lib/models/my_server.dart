@@ -53,8 +53,11 @@ class MyServer {
     }
 
     _server = null;
-    _gamepad.dispose();
     onClientStatusChanged?.call(false);
+  }
+
+  void deleteGamepad() {
+    _gamepad.dispose();
   }
 
   int get runningPort => _server?.port ?? -1;
