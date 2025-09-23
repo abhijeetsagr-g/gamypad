@@ -1,5 +1,5 @@
 # Gamypad
-> Use your smartphone as a virtual game controller on Linux.
+> Use your smartphone as a virtual game controller on Linux inspired by PC REMOTE MONET.
 
 ---
 
