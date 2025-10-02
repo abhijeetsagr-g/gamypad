@@ -1,32 +1,42 @@
 #!/bin/bash
-set -e
 
-APP_NAME="gamypad"
-APP_DIR="$HOME/.local/share/$APP_NAME"
-BIN_PATH="$HOME/.local/bin/$APP_NAME"
-DESKTOP_FILE="$HOME/.local/share/applications/$APP_NAME.desktop"
+# ===== CONFIG =====
+APPIMAGE_NAME="Gamypad-x86_64.AppImage" # Change this to your AppImage filename
+APP_NAME="Gamypad"                      # The app name as it will appear in the menu
+ICON_PATH="gamypad.png"                 # Path to icon (optional, can leave empty)
+INSTALL_DIR="$HOME/.local/bin"
+DESKTOP_DIR="$HOME/.local/share/applications"
+# ==================
 
-echo "📦 Installing $APP_NAME for user $USER..."
+# Check if AppImage exists
+if [ ! -f "$APPIMAGE_NAME" ]; then
+  echo "Error: $APPIMAGE_NAME not found in the current directory."
+  exit 1
+fi
 
-# Ensure local bin + apps dirs exist
-mkdir -p "$APP_DIR" "$HOME/.local/bin" "$HOME/.local/share/applications"
+# Create install directory if it doesn't exist
+mkdir -p "$INSTALL_DIR"
+mkdir -p "$DESKTOP_DIR"
 
-# Copy the whole bundle
-cp -r linux/* "$APP_DIR/"
+# Move AppImage
+cp "$APPIMAGE_NAME" "$INSTALL_DIR/"
 
-# Create/overwrite symlink to binary
-ln -sf "$APP_DIR/gamypad_pc" "$BIN_PATH"
-chmod +x "$APP_DIR/gamypad_pc"
+# Make executable
+chmod +x "$INSTALL_DIR/$APPIMAGE_NAME"
 
-# Install .desktop entry
-tee "$DESKTOP_FILE" >/dev/null <<EOF
+# Create .desktop file
+DESKTOP_FILE="$DESKTOP_DIR/${APP_NAME}.desktop"
+cat >"$DESKTOP_FILE" <<EOL
 [Desktop Entry]
+Name=$APP_NAME
+Exec=$INSTALL_DIR/$APPIMAGE_NAME
+Icon=$ICON_PATH
 Type=Application
-Name=Gamypad
-Exec=$BIN_PATH
-Icon=$APP_DIR/icon.png
-Terminal=false
-Categories=Game;
-EOF
+Categories=Utility;Game;
+EOL
 
-echo "✅ $APP_NAME installed for user $USER!"
+# Make .desktop executable
+chmod +x "$DESKTOP_FILE"
+
+echo "$APP_NAME installed successfully!"
+echo "You can now launch it from your application menu."
