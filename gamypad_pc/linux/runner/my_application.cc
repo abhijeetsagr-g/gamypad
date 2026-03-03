@@ -53,7 +53,7 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_title(window, "Gamypad");
   }
 
-  gtk_window_set_default_size(window, 400, 300);
+  gtk_window_set_default_size(window, 800, 600);
   gtk_window_set_resizable(window, FALSE);
   gtk_window_set_keep_above(window, TRUE); // floating — always on top
 
