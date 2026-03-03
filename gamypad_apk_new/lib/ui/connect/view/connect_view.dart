@@ -21,6 +21,8 @@ class _ConnectViewState extends ConsumerState<ConnectView> {
   final _portController = TextEditingController();
 
   Future<void> _scanQR() async {
+    bool hasScanned = false;
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -28,14 +30,15 @@ class _ConnectViewState extends ConsumerState<ConnectView> {
           appBar: AppBar(title: const Text('Scan QR')),
           body: MobileScanner(
             onDetect: (capture) {
+              if (hasScanned) return;
+
               final code = capture.barcodes.first.rawValue;
               if (code != null && code.contains(':')) {
+                hasScanned = true;
                 final parts = code.split(':');
                 _hostController.text = parts[0];
                 _portController.text = parts[1];
-                // debugPrint(parts[1]);
-
-                Navigator.pop(context);
+                Navigator.of(context).pop(); // use Navigator.of(context)
               }
             },
           ),
