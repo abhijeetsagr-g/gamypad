@@ -1,47 +1,117 @@
 # Gamypad
-> Use your smartphone as a virtual game controller on Linux inspired by PC REMOTE MONET.
+
+> Turn your Android phone into a wireless gamepad for Linux.
+
+Gamypad lets you use your smartphone as a fully functional game controller on Linux. It emulates an Xbox 360 controller via the Linux `uinput` subsystem, so it works with any game that supports a gamepad — no additional drivers or configuration required.
 
 ---
 
-**Gamypad** is a cross-platform solution that transforms your smartphone into a fully functional gamepad controller for Linux. 
+## How It Works
+
+Gamypad has two components:
+
+- **Linux app** — runs a UDP server that receives input from your phone and emulates an Xbox 360 controller
+- **Android app** — connects to the server over WiFi and sends button presses, joystick movements, and trigger inputs
+
+Communication is over UDP for low-latency input. The phone and PC must be on the same network — a **phone hotspot** is recommended for the most reliable connection.
 
 ---
+
 ## Features
 
-- Emulates a Linux game controller
-- Wireless input via socket connection
-- On-screen joystick + buttons
+- Emulates an Xbox 360 controller via `uinput`
+- Full button support — A, B, X, Y, LB, RB, LT, RT, Start, Back, Guide, LS, RS
+- Dual joysticks and D-Pad
+- Automatic server detection via QR code scan
+- Connection watchdog — detects when server or client disconnects
+- Wireless input via UDP over WiFi
 
-## Prerequisites
-Before installing, make sure your user is in the **`input`** group.  
+---
 
-To check, run 
-```bash
-groups
-```
-If it shows **`input`** , you are good to go. 
+## Requirements
 
-If not, run the following
-```bash
-sudo usermod -aG input $USER
-```
+- Linux (x86_64)
+- Android phone (Android 8.0+)
+- Both devices on the same WiFi network (phone hotspot recommended)
 
+---
 
 ## Installation
-Download The `Gamypad-Full.zip` for downloading both Gamypad app for Android and Linux. Or Just the `Gamypad_X86*.zip` for Only the Linux AppImage. 
-Unzip The App and run `./install.sh` and it will show up on your app launcher.
-You Can Later Use `./uninstall.sh` to delete the app launcher files.
 
+### Linux
 
-### How To Run
-- Connect your system and your android phone into the same network.
+1. Download the latest release zip from the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page
+2. Extract the zip:
+    
+    ```bash
+    unzip Gamypad-x86_64.zip
+    ```
+    
+3. Run the install script:
+    
+    ```bash
+    chmod +x install.sh./install.sh
+    ```
+    
+4. Log out and back in for group permission changes to take effect
 
-- Open The Application.
-- Click on **Start Server** in the Linux application.
-- Open the Android application, and connect to the server using the **IP address and port** displayed in the Linux app.
-- You are good to go! 🎮
+### Android
 
+Download and install the APK from the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page.
 
-## TO DO
-- [x] Write Installation Steps
-- [ ] Add Sticky Dpad
+---
+
+## Usage
+
+1. Enable hotspot on your Android phone
+2. Connect your PC to the phone's hotspot
+3. Open **Gamypad** on your PC and click **Start Server**
+4. Open the Android app, tap the QR scanner icon, and scan the QR code shown on the PC
+5. Tap **Connect** — you're ready to play
+
+---
+
+## Uninstallation
+
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
+```
+
+---
+
+## Building from Source
+
+### Prerequisites
+
+- Flutter SDK
+- CMake
+- Clang
+- GTK3 development headers
+
+```bash
+sudo pacman -S cmake clang gtk3  # Arch
+sudo apt install cmake clang libgtk-3-dev  # Ubuntu/Debian
+```
+
+### Linux app
+
+```bash
+cd gamypad_pc
+flutter pub get
+flutter build linux --release
+```
+
+### Android app
+
+```bash
+cd gamypad_apk
+flutter pub get
+flutter build apk --release
+```
+
+---
+
+## License
+
+MIT
