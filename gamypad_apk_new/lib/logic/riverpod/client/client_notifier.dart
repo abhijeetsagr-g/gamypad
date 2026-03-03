@@ -9,7 +9,7 @@ class ClientNotifier extends Notifier<ClientState> {
   ClientState build() {
     _service = ClientService();
     _service.onDisconnected = () {
-      state = const ClientState(); // reset to default
+      state = const ClientState();
     };
     return const ClientState();
   }

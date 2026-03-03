@@ -3,64 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_apk_new/ui/gamepad/widget/gamepad_button.dart';
 
 class TopBar extends ConsumerWidget {
-  const TopBar({super.key, required this.height});
-  final double height;
+  const TopBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final btnH = height;
-    final triggerW = 100.0;
-    final bumperW = height * 2.5;
-    final guideW = height * 1.5;
-
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Left: LT + LB
-        Row(
-          children: [
-            GamepadButton(
-              btnName: 'LT',
-              btnCode: 'LT',
-              width: triggerW,
-              height: btnH,
-            ),
-            const SizedBox(width: 4),
-            GamepadButton(
-              btnName: 'LB',
-              btnCode: 'LB',
-              width: bumperW,
-              height: btnH,
-            ),
-          ],
-        ),
-
-        // Center: Guide
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: const [
+        GamepadButton(btnName: "LT", width: 160, height: 40, btnCode: "LT"),
+        SizedBox(width: 10),
+        GamepadButton(btnName: "LB", width: 140, height: 40, btnCode: "LB"),
+        SizedBox(width: 20),
         GamepadButton(
-          btnName: '⊙',
-          btnCode: 'GUIDE',
-          width: guideW,
-          height: btnH,
+          btnName: "Guide",
+          width: 120,
+          height: 40,
+          btnCode: "GUIDE",
         ),
-
-        // Right: RB + RT
-        Row(
-          children: [
-            GamepadButton(
-              btnName: 'RB',
-              btnCode: 'RB',
-              width: bumperW,
-              height: btnH,
-            ),
-            const SizedBox(width: 4),
-            GamepadButton(
-              btnName: 'RT',
-              btnCode: 'RT',
-              width: triggerW,
-              height: btnH,
-            ),
-          ],
-        ),
+        SizedBox(width: 20),
+        GamepadButton(btnName: "RB", width: 160, height: 40, btnCode: "RB"),
+        SizedBox(width: 10),
+        GamepadButton(btnName: "RT", width: 140, height: 40, btnCode: "RT"),
       ],
     );
   }

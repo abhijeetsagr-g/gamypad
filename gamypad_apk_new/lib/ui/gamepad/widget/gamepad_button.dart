@@ -26,7 +26,7 @@ class _GamepadButtonState extends ConsumerState<GamepadButton> {
   bool _pressed = false;
 
   void _onPress() {
-    HapticFeedback.lightImpact();
+    HapticFeedback.heavyImpact();
     setState(() => _pressed = true);
     final code = BtnCodeMapper.codeOf(widget.btnCode);
     if (BtnCodeMapper.isTrigger(widget.btnCode)) {

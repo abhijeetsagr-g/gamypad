@@ -72,9 +72,9 @@ class ClientService {
     try {
       final bytes = utf8.encode(jsonEncode(message));
       final sent = _socket!.send(bytes, _address!, _port!);
-      print('sent $sent bytes to $_address:$_port'); // add this
+      // print('sent $sent bytes to $_address:$_port'); // add this
     } catch (e) {
-      print('send error: $e'); // and this
+      // print('send error: $e'); // and this
     }
   }
 
