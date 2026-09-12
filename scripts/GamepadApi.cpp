@@ -1,38 +1,36 @@
 #include "Gamepad.h"
 
 extern "C" {
-    // Create a new Gamepad instance
-    Gamepad* Gamepad_new() {
-        return new Gamepad();
+    Gamepad* Gamepad_new(int playerIndex) {
+        Gamepad* gp = new Gamepad(playerIndex);
+        if (!gp->isValid()) {
+            delete gp;
+            return nullptr;
+        }
+        return gp;
     }
 
-    // Delete a Gamepad instance
     void Gamepad_delete(Gamepad* gp) {
         delete gp;
     }
 
-    // Press key
     void Gamepad_pressKey(Gamepad* gp, const char* key) {
-        gp->pressKey(std::string(key));
+        if (gp) gp->pressKey(std::string(key));
     }
 
-    // Release key
     void Gamepad_releaseKey(Gamepad* gp, const char* key) {
-        gp->releaseKey(std::string(key));
+        if (gp) gp->releaseKey(std::string(key));
     }
 
-    // Set axis
     void Gamepad_setAxis(Gamepad* gp, int type, int valueX, int valueY) {
-        gp->setAxis(type, valueX, valueY);
+        if (gp) gp->setAxis(type, valueX, valueY);
     }
 
-    // set triggers
     void Gamepad_setTrigger(Gamepad* gp, int code, int value) {
-        gp->setTrigger(code, value);
+        if (gp) gp->setTrigger(code, value);
     }
 
     void Gamepad_setDpad(Gamepad* gp, int xValue, int yValue) {
-        gp->setDpad(xValue, yValue);
+        if (gp) gp->setDpad(xValue, yValue);
     }
-
 }

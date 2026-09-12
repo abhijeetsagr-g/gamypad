@@ -5,46 +5,55 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <cstring>
+#include <cstdio>
 
-Gamepad::Gamepad() {
+Gamepad::Gamepad(int playerIndex) : fd(-1), player(playerIndex) {
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
-    if (fd < 0) { perror("open"); exit(1); }
+    if (fd < 0) {
+        perror("open /dev/uinput");
+        return;
+    }
 
-    keyMap = { 
-    {"A", BTN_A},
-    {"B", BTN_B},
-    {"X", BTN_X},
-    {"Y", BTN_Y},
-    {"UP", BTN_DPAD_UP},
-    {"DOWN", BTN_DPAD_DOWN},
-    {"LEFT", BTN_DPAD_LEFT},
-    {"RIGHT", BTN_DPAD_RIGHT},
-    {"LB", BTN_TL},
-    {"RB", BTN_TR},
-    {"START", BTN_START},
-    {"SELECT", BTN_SELECT},
-    {"LS", BTN_THUMBL},
-    {"RS", BTN_THUMBR},
-    {"GUIDE", BTN_MODE}
+    keyMap = {
+        {"A", BTN_A},
+        {"B", BTN_B},
+        {"X", BTN_X},
+        {"Y", BTN_Y},
+        {"UP", BTN_DPAD_UP},
+        {"DOWN", BTN_DPAD_DOWN},
+        {"LEFT", BTN_DPAD_LEFT},
+        {"RIGHT", BTN_DPAD_RIGHT},
+        {"LB", BTN_TL},
+        {"RB", BTN_TR},
+        {"START", BTN_START},
+        {"SELECT", BTN_SELECT},
+        {"LS", BTN_THUMBL},
+        {"RS", BTN_THUMBR},
+        {"GUIDE", BTN_MODE}
     };
-    
+
     enableGamepad();
-  
+
     uinput_setup usetup{};
     usetup.id.bustype = BUS_USB;
-    
     usetup.id.vendor  = 0x045e;  // Microsoft
     usetup.id.product = 0x028e;  // Xbox 360 Controller
-    strncpy(usetup.name, "Gamypad", UINPUT_MAX_NAME_SIZE);
+    usetup.id.version = static_cast<__u16>(playerIndex);
+
+    char name[UINPUT_MAX_NAME_SIZE];
+    snprintf(name, UINPUT_MAX_NAME_SIZE, "Gamypad %d", playerIndex);
+    strncpy(usetup.name, name, UINPUT_MAX_NAME_SIZE);
 
     ioctl(fd, UI_DEV_SETUP, &usetup);
     ioctl(fd, UI_DEV_CREATE);
-    sleep(1);
+    usleep(200000); // 200ms is enough for udev; 1s blocked every extra pad
 }
 
 Gamepad::~Gamepad() {
+    if (fd < 0) return;
     ioctl(fd, UI_DEV_DESTROY);
     close(fd);
+    fd = -1;
 }
 
 void Gamepad::enableGamepad() {
@@ -56,7 +65,7 @@ void Gamepad::enableGamepad() {
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
     ioctl(fd, UI_SET_EVBIT, EV_SYN);
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
-    
+
     ioctl(fd, UI_SET_ABSBIT, ABS_X);
     ioctl(fd, UI_SET_ABSBIT, ABS_Y);
     ioctl(fd, UI_SET_ABSBIT, ABS_RX);
@@ -68,91 +77,32 @@ void Gamepad::enableGamepad() {
         ioctl(fd, UI_SET_KEYBIT, code);
     }
 
+    auto setupAbs = [&](int code, int min, int max, int flat, int fuzz) {
+        uinput_abs_setup abs{};
+        abs.code = code;
+        abs.absinfo.minimum = min;
+        abs.absinfo.maximum = max;
+        abs.absinfo.flat = flat;
+        abs.absinfo.fuzz = fuzz;
+        abs.absinfo.value = ABS_VALUE;
+        ioctl(fd, UI_ABS_SETUP, &abs);
+    };
 
-    // Left stick X 
-    uinput_abs_setup abs_x {};
-    abs_x.code = ABS_X;
-    abs_x.absinfo.maximum = RANGE_NUM;
-    abs_x.absinfo.minimum = -RANGE_NUM;
-    abs_x.absinfo.flat = ABS_FLAT;
-    abs_x.absinfo.fuzz = ABS_FUZZ;
-    abs_x.absinfo.value = ABS_VALUE;
-    ioctl(fd, UI_ABS_SETUP, &abs_x);
+    setupAbs(ABS_X, -RANGE_NUM, RANGE_NUM, ABS_FLAT, ABS_FUZZ);
+    setupAbs(ABS_Y, -RANGE_NUM, RANGE_NUM, ABS_FLAT, ABS_FUZZ);
+    setupAbs(ABS_RX, -RANGE_NUM, RANGE_NUM, ABS_FLAT, ABS_FUZZ);
+    setupAbs(ABS_RY, -RANGE_NUM, RANGE_NUM, ABS_FLAT, ABS_FUZZ);
+    setupAbs(ABS_Z, 0, 255, 0, 0);
+    setupAbs(ABS_RZ, 0, 255, 0, 0);
 
-    // Left Stick Y
-    uinput_abs_setup abs_y {};
-    abs_y.code = ABS_Y;
-    abs_y.absinfo.maximum = RANGE_NUM;
-    abs_y.absinfo.minimum = -RANGE_NUM;
-    abs_y.absinfo.flat = ABS_FLAT;
-    abs_y.absinfo.fuzz = ABS_FUZZ;
-    abs_y.absinfo.value = ABS_VALUE;
-    ioctl(fd, UI_ABS_SETUP, &abs_y);
-    
-    // Right Stick X
-    uinput_abs_setup abs_rx {};
-    abs_rx.code = ABS_RX;
-    abs_rx.absinfo.maximum = RANGE_NUM;
-    abs_rx.absinfo.minimum = -RANGE_NUM;
-    abs_rx.absinfo.flat = ABS_FLAT;
-    abs_rx.absinfo.fuzz = ABS_FUZZ;
-    abs_rx.absinfo.value = ABS_VALUE;
-    ioctl(fd, UI_ABS_SETUP, &abs_rx);
-    
-    // Right Stick Y
-    uinput_abs_setup abs_ry {};
-    abs_ry.code = ABS_RY;
-    abs_ry.absinfo.maximum = RANGE_NUM;
-    abs_ry.absinfo.minimum = -RANGE_NUM;
-    abs_ry.absinfo.flat = ABS_FLAT;
-    abs_ry.absinfo.fuzz = ABS_FUZZ;
-    abs_ry.absinfo.value = ABS_VALUE;
-    ioctl(fd, UI_ABS_SETUP, &abs_ry);
-
-    // Left Trigger (ABS_Z)
-    uinput_abs_setup abs_z {};
-    abs_z.code = ABS_Z;
-    abs_z.absinfo.minimum = 0;
-    abs_z.absinfo.maximum = 255;
-    abs_z.absinfo.flat = 0;
-    abs_z.absinfo.fuzz = 0;
-    abs_z.absinfo.value = 0;
-    ioctl(fd, UI_ABS_SETUP, &abs_z);
-
-    // Right Trigger (ABS_RZ)
-    uinput_abs_setup abs_rz {};
-    abs_rz.code = ABS_RZ;
-    abs_rz.absinfo.minimum = 0;
-    abs_rz.absinfo.maximum = 255;
-    abs_rz.absinfo.flat = 0;
-    abs_rz.absinfo.fuzz = 0;
-    abs_rz.absinfo.value = 0;
-    ioctl(fd, UI_ABS_SETUP, &abs_rz);
-
-    // D-pad horizontal (X) and vertical (Y)
     ioctl(fd, UI_SET_ABSBIT, ABS_HAT0X);
     ioctl(fd, UI_SET_ABSBIT, ABS_HAT0Y);
-
-    uinput_abs_setup abs_hatx{};
-    abs_hatx.code = ABS_HAT0X;
-    abs_hatx.absinfo.minimum = -1;
-    abs_hatx.absinfo.maximum = 1;
-    abs_hatx.absinfo.flat = 0;
-    abs_hatx.absinfo.fuzz = 0;
-    abs_hatx.absinfo.value = 0;
-    ioctl(fd, UI_ABS_SETUP, &abs_hatx);
-
-    uinput_abs_setup abs_haty{};
-    abs_haty.code = ABS_HAT0Y;
-    abs_haty.absinfo.minimum = -1;
-    abs_haty.absinfo.maximum = 1;
-    abs_haty.absinfo.flat = 0;
-    abs_haty.absinfo.fuzz = 0;
-    abs_haty.absinfo.value = 0;
-    ioctl(fd, UI_ABS_SETUP, &abs_haty);
+    setupAbs(ABS_HAT0X, -1, 1, 0, 0);
+    setupAbs(ABS_HAT0Y, -1, 1, 0, 0);
 }
 
 void Gamepad::emit(int type, int code, int value) {
+    if (fd < 0) return;
     input_event ie{};
     memset(&ie, 0, sizeof(ie));
     ie.type = type;
@@ -163,36 +113,36 @@ void Gamepad::emit(int type, int code, int value) {
 }
 
 void Gamepad::pressKey(const std::string& key) {
-    emit(EV_KEY, keyMap[key], 1);
+    auto it = keyMap.find(key);
+    if (it == keyMap.end()) return;
+    emit(EV_KEY, it->second, 1);
     emit(EV_SYN, SYN_REPORT, 0);
 }
 
 void Gamepad::releaseKey(const std::string& key) {
-    emit(EV_KEY, keyMap[key], 0);
+    auto it = keyMap.find(key);
+    if (it == keyMap.end()) return;
+    emit(EV_KEY, it->second, 0);
     emit(EV_SYN, SYN_REPORT, 0);
 }
 
 // Type = 1 -> left stick or 0 = right stick. X and Y are axes
 void Gamepad::setAxis(int type, int valueX, int valueY) {
-    if (type == 1) { // left stick
+    if (type == 1) {
         emit(EV_ABS, ABS_X, valueX);
         emit(EV_ABS, ABS_Y, valueY);
-    } else { // right stick
+    } else {
         emit(EV_ABS, ABS_RX, valueX);
         emit(EV_ABS, ABS_RY, valueY);
     }
-    emit(EV_SYN, SYN_REPORT, 0); // flush events
+    emit(EV_SYN, SYN_REPORT, 0);
 }
 
-// xValue: -1 = LEFT, 0 = neutral, 1 = RIGHT
-// yValue: -1 = UP, 0 = neutral, 1 = DOWN
 void Gamepad::setDpad(int xValue, int yValue) {
     emit(EV_ABS, ABS_HAT0X, xValue);
     emit(EV_ABS, ABS_HAT0Y, yValue);
     emit(EV_SYN, SYN_REPORT, 0);
 }
-
-
 
 void Gamepad::setTrigger(int type, int value) {
     int code = type == 1 ? ABS_Z : ABS_RZ;

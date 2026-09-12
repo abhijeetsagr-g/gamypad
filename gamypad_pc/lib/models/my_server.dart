@@ -3,38 +3,75 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:gamypad_pc/models/gamepad.dart';
 
+class ConnectedClient {
+  ConnectedClient(this.gamepad);
+
+  final Gamepad gamepad;
+  DateTime lastSeen = DateTime.now();
+}
+
+class ClientInfo {
+  ClientInfo(this.playerIndex, this.endpoint, this.lastSeen);
+
+  final int playerIndex;
+  final String endpoint;
+  final DateTime lastSeen;
+}
+
 class MyServer {
-  final Gamepad _gamepad = Gamepad();
+  final Map<String, ConnectedClient> _clients = {};
   RawDatagramSocket? _server;
   Timer? _watchdog;
-  DateTime? _lastPacket;
   String _error = "";
   bool _running = false;
-  InternetAddress? _clientAddress;
-  int? _clientPort;
+  int _nextPlayerIndex = 1;
 
-  void Function(bool connected)? onClientStatusChanged;
+  void Function(List<ClientInfo> clients)? onClientsChanged;
+
+  List<ClientInfo> get clients => _clients.entries
+      .map((e) => ClientInfo(
+          e.value.gamepad.playerIndex, e.key, e.value.lastSeen))
+      .toList()
+    ..sort((a, b) => a.playerIndex.compareTo(b.playerIndex));
+
+  void _notifyClientsChanged() => onClientsChanged?.call(clients);
+
+  String _keyFor(Datagram dg) => '${dg.address.address}:${dg.port}';
 
   void _onPacket(Datagram dg) {
-    _lastPacket = DateTime.now();
-    _clientAddress = dg.address;
-    _clientPort = dg.port;
-    onClientStatusChanged?.call(true);
-
     try {
       final data = utf8.decode(dg.data);
       final json = jsonDecode(data);
       if (json is! Map<String, dynamic>) return;
-      if (json['type'] == 'ping') {
+
+      final key = _keyFor(dg);
+      final isPing = json['type'] == 'ping';
+
+      final existing = _clients[key];
+      if (existing != null) {
+        existing.lastSeen = DateTime.now();
+      } else if (isPing) {
+        // First contact from a new phone -> it becomes its own controller.
+        final client = ConnectedClient(Gamepad(_nextPlayerIndex++));
+        _clients[key] = client;
+        print('🎮 Player ${client.gamepad.playerIndex} connected: $key');
+        _notifyClientsChanged();
+      } else {
+        // Input before any ping (or unknown packet type) — ignore.
+        return;
+      }
+
+      if (isPing) {
         // reply pong back to client
         _server!.send(
           utf8.encode(jsonEncode({"type": "pong"})),
-          _clientAddress!,
-          _clientPort!,
+          dg.address,
+          dg.port,
         );
         return;
       }
-      _gamepad.handleClient(data);
+
+      existing!.gamepad.handleClient(data);
     } catch (e) {
       _error = "Failed to decode packet: $e";
     }
@@ -63,11 +100,20 @@ class MyServer {
 
   void _startWatchdog() {
     _watchdog = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (_lastPacket == null) return;
-      final elapsed = DateTime.now().difference(_lastPacket!);
-      if (elapsed.inSeconds > 5) {
-        _lastPacket = null;
-        onClientStatusChanged?.call(false);
+      final now = DateTime.now();
+      final stale = _clients.entries
+          .where((e) => now.difference(e.value.lastSeen).inSeconds > 5)
+          .map((e) => e.key)
+          .toList();
+
+      for (final key in stale) {
+        final client = _clients.remove(key)!;
+        print('📴 Player ${client.gamepad.playerIndex} disconnected: $key');
+        client.gamepad.dispose();
+      }
+
+      if (stale.isNotEmpty) {
+        _notifyClientsChanged();
       }
     });
   }
@@ -77,20 +123,37 @@ class MyServer {
     _running = false;
     _watchdog?.cancel();
     _watchdog = null;
-    _lastPacket = null;
     try {
       _server?.close();
     } catch (e) {
       _error = "Error closing server: $e";
     }
     _server = null;
-    onClientStatusChanged?.call(false);
+    _disposeAll();
   }
 
-  void deleteGamepad() {
-    _gamepad.dispose();
+  /// Kick a single device by its "ip:port" endpoint. Returns true if found.
+  bool kickClient(String endpoint) {
+    final client = _clients.remove(endpoint);
+    if (client == null) return false;
+    print('🦶 Kicked Player ${client.gamepad.playerIndex}: $endpoint');
+    client.gamepad.dispose();
+    _notifyClientsChanged();
+    return true;
   }
+
+  void _disposeAll() {
+    for (final client in _clients.values) {
+      client.gamepad.dispose();
+    }
+    _clients.clear();
+    _nextPlayerIndex = 1;
+    _notifyClientsChanged();
+  }
+
+  void deleteGamepad() {}
 
   int get runningPort => _server?.port ?? -1;
   String get errorMessage => _error;
+  int get connectedCount => _clients.length;
 }

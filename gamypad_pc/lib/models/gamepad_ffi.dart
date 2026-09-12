@@ -6,7 +6,7 @@ import 'package:ffi/ffi.dart';
 final DynamicLibrary _lib = DynamicLibrary.open('libgamepad.so');
 
 // C Function typedefs
-typedef _GamepadNewC = Pointer<Void> Function();
+typedef _GamepadNewC = Pointer<Void> Function(Int32);
 typedef _GamepadDeleteC = Void Function(Pointer<Void>);
 typedef _GamepadPressKeyC = Void Function(Pointer<Void>, Pointer<Utf8>);
 typedef _GamepadReleaseKeyC = Void Function(Pointer<Void>, Pointer<Utf8>);
@@ -15,7 +15,7 @@ typedef _GamepadSetTriggerC = Void Function(Pointer<Void>, Int32, Int32);
 typedef _GamepadSetDpadC = Void Function(Pointer<Void>, Int32, Int32);
 
 // Dart typedefs
-typedef GamepadNew = Pointer<Void> Function();
+typedef GamepadNew = Pointer<Void> Function(int);
 typedef GamepadDelete = void Function(Pointer<Void>);
 typedef GamepadPressKey = void Function(Pointer<Void>, Pointer<Utf8>);
 typedef GamepadReleaseKey = void Function(Pointer<Void>, Pointer<Utf8>);
@@ -38,8 +38,6 @@ final GamepadReleaseKey gamepadReleaseKey = _lib
 final GamepadSetAxis gamepadSetAxis = _lib
     .lookupFunction<_GamepadSetAxisC, GamepadSetAxis>('Gamepad_setAxis');
 final GamepadSetTrigger gamepadSetTrigger = _lib
-    .lookupFunction<_GamepadSetTriggerC, GamepadSetTrigger>(
-      'Gamepad_setTrigger',
-    );
+    .lookupFunction<_GamepadSetTriggerC, GamepadSetTrigger>('Gamepad_setTrigger');
 final GamepadSetDpad gamepadSetDpad = _lib
     .lookupFunction<_GamepadSetDpadC, GamepadSetDpad>('Gamepad_setDpad');

@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/home/vansg/MyProject/Flutter/gamypad/gamypad_pc/linux"
+  "cmake.sourceDirectory": "/home/vansg/MyProject/Flutter/gamypad/gamypad_pc/linux",
+  "dart.flutterSdkPath": ".fvm/versions/3.38.5"
 }
