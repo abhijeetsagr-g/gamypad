@@ -30,13 +30,13 @@ Gamypad emulates an Xbox 360 controller via the Linux `uinput` subsystem — no 
 
 | Server Idle | Server Running | QR Code |
 |-------------|----------------|---------|
-| ![idle](screenshots/linux_idle.png) | ![running](screenshots/linux_running.png) | ![qr](screenshots/linux_qr.png) |
+| ![idle](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/linux_idle.png) | ![running](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/linux_running.png) | ![qr](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/linux_qr.png) |
 
 #### 📱 Android App
 
 | Home | Controller | 
 |------|------------|
-| ![home](screenshots/android_home.png) | ![controller](screenshots/android_controller.png) |
+| ![home](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/android_home.png) | ![controller](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/android_controller.png) |
 
 ---
 
@@ -214,13 +214,13 @@ This fork (`ixiflower/gamypad`) adds multiplayer + kick feature. A pull request 
 
 | سرور خاموش | سرور روشن | QR Code |
 |-------------|------------|---------|
-| ![idle](screenshots/linux_idle.png) | ![running](screenshots/linux_running.png) | ![qr](screenshots/linux_qr.png) |
+| ![idle](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/linux_idle.png) | ![running](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/linux_running.png) | ![qr](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/linux_qr.png) |
 
 #### 📱 نسخه‌ی اندروید
 
 | خانه | دسته‌ی بازی |
 |------|-------------|
-| ![home](screenshots/android_home.png) | ![controller](screenshots/android_controller.png) |
+| ![home](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/android_home.png) | ![controller](https://raw.githubusercontent.com/parham0121/gamypad-assets/main/screenshots/android_controller.png) |
 
 ---
 
