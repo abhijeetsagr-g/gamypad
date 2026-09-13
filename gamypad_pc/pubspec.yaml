@@ -2,7 +2,7 @@ name: gamypad_pc
 description: Use your smartphone as a gamepad on Linux
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.2.0+1  
+version: 1.2.1+2
 
 environment:
   sdk: ^3.10.0-162.1.beta

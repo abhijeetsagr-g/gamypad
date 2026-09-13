@@ -14,22 +14,21 @@ class _HomePageState extends State<HomePage> {
   late final MyServer _server;
   String _ip = "";
   bool _serverOn = false;
-  bool _clientConnected = false;
+  List<ClientInfo> _clients = [];
   String _error = "";
 
   @override
   void initState() {
     super.initState();
     _server = MyServer();
-    _server.onClientStatusChanged = (connected) {
-      setState(() => _clientConnected = connected);
+    _server.onClientsChanged = (clients) {
+      setState(() => _clients = clients);
     };
   }
 
   @override
   void dispose() {
     _server.stop();
-    _server.deleteGamepad();
     super.dispose();
   }
 
@@ -64,9 +63,59 @@ class _HomePageState extends State<HomePage> {
     await _server.stop();
     setState(() {
       _serverOn = false;
-      _clientConnected = false;
+      _clients = [];
       _ip = "";
     });
+  }
+
+  Future<void> _confirmKick(ClientInfo c) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        title: Text(
+          'Kick Player ${c.playerIndex}?',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+            fontSize: 14,
+          ),
+        ),
+        content: Text(
+          '${c.endpoint} will be disconnected and its virtual gamepad removed. The phone can reconnect by tapping Connect again.',
+          style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('CANCEL',
+                style: TextStyle(
+                    color: Colors.white38,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                    fontSize: 11)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('KICK',
+                style: TextStyle(
+                    fontWeight: FontWeight.w800, letterSpacing: 1.5, fontSize: 11)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) _server.kickClient(c.endpoint);
   }
 
   @override
@@ -90,13 +139,13 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               children: [
                 Text(
-                  _clientConnected
-                      ? 'CONNECTED'
+                  _clients.isNotEmpty
+                      ? '${_clients.length} CONNECTED'
                       : _serverOn
                       ? 'WAITING'
                       : 'OFF',
                   style: TextStyle(
-                    color: _clientConnected
+                    color: _clients.isNotEmpty
                         ? const Color(0xFF00FF88)
                         : _serverOn
                         ? Colors.orange
@@ -112,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _clientConnected
+                    color: _clients.isNotEmpty
                         ? const Color(0xFF00FF88)
                         : _serverOn
                         ? Colors.orange
@@ -132,25 +181,87 @@ class _HomePageState extends State<HomePage> {
             children: [
               // Status display
               if (_serverOn) ...[
-                // show this in HomePage when server is running
-                if (!_clientConnected)
-                  QrImageView(
-                    data: '$_ip:${_server.runningPort}',
-                    version: QrVersions.auto,
-                    size: 150,
-                    backgroundColor: Colors.white,
-                  ),
+                // QR always visible — every phone can scan the same code
+                QrImageView(
+                  data: '$_ip:${_server.runningPort}',
+                  version: QrVersions.auto,
+                  size: 150,
+                  backgroundColor: Colors.white,
+                ),
 
                 Text(
-                  _clientConnected ? 'DEVICE CONNECTED' : 'WAITING FOR DEVICE',
+                  _clients.isNotEmpty
+                      ? '${_clients.length} DEVICE${_clients.length == 1 ? '' : 'S'} CONNECTED'
+                      : 'WAITING FOR DEVICE',
                   style: TextStyle(
-                    color: _clientConnected
+                    color: _clients.isNotEmpty
                         ? const Color(0xFF00FF88)
                         : Colors.white38,
                     fontSize: 12,
                     letterSpacing: 4,
                   ),
                 ),
+                if (_clients.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  for (final c in _clients)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 6, top: 6, bottom: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A1A1A),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: const Color(0xFF00FF88).withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.gamepad,
+                              color: Color(0xFF00FF88), size: 18),
+                          const SizedBox(width: 10),
+                          Text(
+                            'PLAYER ${c.playerIndex}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            c.endpoint,
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            '● LIVE',
+                            style: TextStyle(
+                              color: Color(0xFF00FF88),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16),
+                            color: Colors.white38,
+                            hoverColor: Colors.red.withValues(alpha: 0.15),
+                            tooltip: 'Kick',
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                                minWidth: 28, minHeight: 28),
+                            onPressed: () => _confirmKick(c),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
                 const SizedBox(height: 24),
                 Text(
                   _ip,
