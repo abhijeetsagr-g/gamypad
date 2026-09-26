@@ -87,6 +87,29 @@ Download and install the APK from the [Releases](https://github.com/abhijeetsagr
 
 ---
 
+## 🗂️ Repository layout
+
+One monorepo. The two apps are two halves of a single product that speak a
+shared wire protocol, so they are versioned and released together.
+
+```
+gamypad/
+├── gamypad_controller/   Android app  (package: gamypad_controller)
+├── gamypad_pc/           Linux app    (package: gamypad_pc)
+│   ├── native/           C++ uinput sources → libgamepad.so
+│   └── dist/             install.sh, uninstall.sh, build_release.sh
+└── screenshots/
+```
+
+> **The wire contract spans both apps.** Button names live in
+> `gamypad_controller/lib/core/utils/btn_code_mapper.dart`, and must match
+> `gamypad_pc/native/Gamepad.cpp` (`keyMap`) and
+> `gamypad_pc/lib/core/gamepad.dart` (the `action` dispatch). Changing one side
+> without the other breaks that input on the PC. Keep both `pubspec.yaml`
+> versions in sync.
+
+---
+
 ## 🎮 Usage
 
 1. Enable hotspot on your Android phone
@@ -130,9 +153,18 @@ flutter build linux --release
 ### Android app
 
 ```bash
-cd gamypad_apk
+cd gamypad_controller
 flutter pub get
 flutter build apk --release
+```
+
+### Packaging a release
+
+Both artifacts are attached to the same GitHub Release, one per tag:
+
+```bash
+cd gamypad_pc && ./dist/build_release.sh   # → dist/Gamypad-x86_64.zip
+cd gamypad_controller && flutter build apk --release
 ```
 
 ---
