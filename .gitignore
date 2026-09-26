@@ -1,0 +1,59 @@
+# Gamypad — monorepo root
+#
+# This file covers things that span more than one of the three packages
+# (protocol/, gamypad_controller/, gamypad_pc/). Each package also keeps its
+# own generated Flutter scaffold .gitignore.
+
+# --- Build output -----------------------------------------------------------
+# `flutter build linux --release` output. Never commit this: it is ~50MB and
+# is what previously bloated this repo to 157MB.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+coverage/
+
+# --- Release artifacts ------------------------------------------------------
+# dist/Gamypad/ is a build product assembled by gamypad_pc/dist/build_release.sh
+# and uploaded to GitHub Releases. Keep it out of git.
+gamypad_pc/dist/Gamypad/
+*.AppImage
+*.apk
+*.aab
+
+# Prebuilt native libraries. The real libgamepad.so is compiled from
+# gamypad_pc/native/*.cpp by gamypad_pc/linux/CMakeLists.txt — never use or
+# commit a checked-in copy, it silently drifts from the C++ sources.
+*.so
+*.dylib
+*.dll
+*.o
+*.a
+
+# --- Secrets / local machine config -----------------------------------------
+# Android SDK + Gradle local paths and signing material
+local.properties
+*.jks
+*.keystore
+key.properties
+
+# Kotlin compiler session markers. The filename embeds a machine-specific
+# hash that changes on every build, so tracking it causes constant churn.
+.kotlin/
+
+# Gradle
+.gradle/
+
+# --- Editors & OS -----------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.log
+*.swp
+.DS_Store
+Thumbs.db

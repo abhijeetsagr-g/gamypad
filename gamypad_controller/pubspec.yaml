@@ -1,0 +1,23 @@
+name: gamypad_controller
+description: Android half of Gamypad — turns a phone into a wireless Xbox 360 controller.
+publish_to: 'none'
+
+# Keep in sync with ../gamypad_pc/pubspec.yaml — the two halves must ship
+# matching versions because they share a wire protocol.
+version: 1.2.0+1
+environment:
+  sdk: ^3.11.0-296.2.beta
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.2.1
+  mobile_scanner: ^7.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

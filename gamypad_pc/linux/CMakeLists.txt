@@ -129,14 +129,14 @@ endif()
 
 # === Native Gamepad library ===
 set(GAMEPAD_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/Gamepad.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/GamepadApi.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../native/Gamepad.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../native/GamepadApi.cpp
 )
 
 add_library(gamepad SHARED ${GAMEPAD_SOURCES})
 
 target_include_directories(gamepad PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts
+    ${CMAKE_CURRENT_SOURCE_DIR}/../native
 )
 
 target_link_libraries(gamepad PRIVATE

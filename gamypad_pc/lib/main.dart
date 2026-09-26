@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:gamypad_pc/pages/home_page.dart';
+import 'package:gamypad_pc/pages/server_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  runApp(GamypadApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class GamypadApp extends StatefulWidget {
+  const GamypadApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<GamypadApp> createState() => _GamypadAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _GamypadAppState extends State<GamypadApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
