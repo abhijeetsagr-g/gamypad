@@ -1,7 +1,6 @@
 # Gamypad — monorepo root
 #
 # This file covers things that span more than one of the three packages
-# (protocol/, gamypad_controller/, gamypad_pc/). Each package also keeps its
 # own generated Flutter scaffold .gitignore.
 
 # --- Build output -----------------------------------------------------------
