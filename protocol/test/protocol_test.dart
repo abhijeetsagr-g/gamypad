@@ -24,6 +24,9 @@ const _keyMapKeys = [
   'GUIDE',
 ];
 
+Map<String, dynamic> _decode(String encoded) =>
+    jsonDecode(encoded) as Map<String, dynamic>;
+
 void main() {
   group('GamepadButton', () {
     test('matches the native keyMap exactly, in order', () {
@@ -46,6 +49,13 @@ void main() {
     test('uses the LT/RT wire tokens', () {
       expect(GamepadTrigger.values.map((t) => t.name).toList(), ['LT', 'RT']);
     });
+
+    test('left comes first, so index 0 is left', () {
+      // Same reason as GamepadStick: the index crosses into native, where 0
+      // must mean left for both sticks and triggers to agree.
+      expect(GamepadTrigger.LT.index, 0);
+      expect(GamepadTrigger.RT.index, 1);
+    });
   });
 
   group('GamepadStick', () {
@@ -54,6 +64,41 @@ void main() {
         'leftStick',
         'rightStick',
       ]);
+    });
+
+    test('left comes first, so index 0 is left', () {
+      // `gamypad_pc` passes `stick.index` straight through FFI and the native
+      // setAxis treats 0 as left. Reordering this enum would silently swap the
+      // sticks with no error, so the order is pinned here.
+      expect(GamepadStick.leftStick.index, 0);
+      expect(GamepadStick.rightStick.index, 1);
+    });
+  });
+
+  group('the two-key shape', () {
+    test('every input message uses "action" and "value"', () {
+      final messages = <Message>[
+        const ButtonMessage(button: GamepadButton.A, pressed: true),
+        const TriggerMessage(trigger: GamepadTrigger.LT, value: 128),
+        const StickMessage(stick: GamepadStick.leftStick, x: 1, y: 2),
+      ];
+      for (final message in messages) {
+        expect(message.toJson().keys.toSet(), {'action', 'value'});
+      }
+    });
+
+    test('no input message collides with the health "type" key', () {
+      for (final button in GamepadButton.values) {
+        expect(
+          const ButtonMessage(
+            button: GamepadButton.A,
+            pressed: true,
+          ).toJson().containsKey('type'),
+          isFalse,
+        );
+        expect(button.name, isNot('ping'));
+        expect(button.name, isNot('pong'));
+      }
     });
   });
 
@@ -80,27 +125,34 @@ void main() {
   });
 
   group('ButtonMessage', () {
-    test('press encodes with an uppercase btn token', () {
+    test('pressed encodes as action=A value=1', () {
       expect(
-        ButtonMessage(button: GamepadButton.A, pressed: true).encode(),
-        '{"action":"press","btn":"A"}',
+        const ButtonMessage(button: GamepadButton.A, pressed: true).encode(),
+        '{"action":"A","value":1}',
       );
     });
 
-    test('release encodes with an uppercase btn token', () {
+    test('released encodes as action=A value=0', () {
       expect(
-        ButtonMessage(button: GamepadButton.GUIDE, pressed: false).encode(),
-        '{"action":"release","btn":"GUIDE"}',
+        const ButtonMessage(button: GamepadButton.A, pressed: false).encode(),
+        '{"action":"A","value":0}',
       );
+    });
+
+    test('every button uses its uppercase token as the action', () {
+      for (final button in GamepadButton.values) {
+        expect(
+          ButtonMessage(button: button, pressed: true).toJson()['action'],
+          button.name,
+        );
+      }
     });
 
     test('round-trips every button in both directions', () {
       for (final button in GamepadButton.values) {
         for (final pressed in [true, false]) {
           final original = ButtonMessage(button: button, pressed: pressed);
-          final decoded = Message.fromJson(
-            jsonDecode(original.encode()) as Map<String, dynamic>,
-          );
+          final decoded = Message.fromJson(_decode(original.encode()));
           expect(decoded, isA<ButtonMessage>());
           final message = decoded as ButtonMessage;
           expect(message.button, button);
@@ -111,7 +163,7 @@ void main() {
 
     test('an unknown button name is rejected', () {
       expect(
-        () => Message.fromJson({'action': 'press', 'btn': 'TURBO'}),
+        () => Message.fromJson({'action': 'TURBO', 'value': 1}),
         throwsA(isA<FormatException>()),
       );
     });
@@ -120,62 +172,45 @@ void main() {
       // Guards against a silent revert to lowercase tokens, which would miss
       // every key in the native keyMap.
       expect(
-        () => Message.fromJson({'action': 'press', 'btn': 'a'}),
+        () => Message.fromJson({'action': 'a', 'value': 1}),
         throwsA(isA<FormatException>()),
       );
+    });
+
+    test('a button value other than 0 or 1 is rejected', () {
+      expect(
+        () => Message.fromJson({'action': 'A', 'value': 2}),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('accepts a numeric string for the value', () {
+      final decoded =
+          Message.fromJson({'action': 'A', 'value': '1'}) as ButtonMessage;
+      expect(decoded.pressed, isTrue);
     });
   });
 
   group('TriggerMessage', () {
     test('action carries the LT/RT token', () {
       expect(
-        TriggerMessage(
+        const TriggerMessage(
           trigger: GamepadTrigger.LT,
           value: 255,
         ).toJson()['action'],
         'LT',
       );
       expect(
-        TriggerMessage(trigger: GamepadTrigger.RT, value: 0).toJson()['action'],
+        const TriggerMessage(
+          trigger: GamepadTrigger.RT,
+          value: 0,
+        ).toJson()['action'],
         'RT',
       );
     });
 
-    test('normalized maps 0..255 onto 0.0..1.0', () {
-      expect(
-        TriggerMessage(trigger: GamepadTrigger.LT, value: 0).normalized,
-        0.0,
-      );
-      expect(
-        TriggerMessage(trigger: GamepadTrigger.LT, value: 255).normalized,
-        1.0,
-      );
-    });
-
-    test('pressed is true above zero only', () {
-      expect(
-        TriggerMessage(trigger: GamepadTrigger.LT, value: 0).pressed,
-        isFalse,
-      );
-      expect(
-        TriggerMessage(trigger: GamepadTrigger.LT, value: 1).pressed,
-        isTrue,
-      );
-    });
-
-    test('out-of-range values are rejected on decode', () {
-      expect(
-        () => Message.fromJson({'action': 'LT', 'value': '256'}),
-        throwsA(isA<FormatException>()),
-      );
-      expect(
-        () => Message.fromJson({'action': 'RT', 'value': '-1'}),
-        throwsA(isA<FormatException>()),
-      );
-    });
-
     test('round-trips across the full analog range', () {
-      for (final value in [0, 1, 64, 128, 254, 255]) {
+      for (final value in [triggerMin, 1, 64, 128, 254, triggerMax]) {
         for (final trigger in GamepadTrigger.values) {
           final original = TriggerMessage(trigger: trigger, value: value);
           final decoded = Message.fromJson(original.toJson()) as TriggerMessage;
@@ -184,69 +219,189 @@ void main() {
         }
       }
     });
+
+    test('normalized maps the range onto 0.0..1.0', () {
+      expect(
+        const TriggerMessage(trigger: GamepadTrigger.LT, value: 0).normalized,
+        0.0,
+      );
+      expect(
+        const TriggerMessage(
+          trigger: GamepadTrigger.LT,
+          value: triggerMax,
+        ).normalized,
+        1.0,
+      );
+    });
+
+    test('pressed is true above zero only', () {
+      expect(
+        const TriggerMessage(trigger: GamepadTrigger.LT, value: 0).pressed,
+        isFalse,
+      );
+      expect(
+        const TriggerMessage(trigger: GamepadTrigger.LT, value: 1).pressed,
+        isTrue,
+      );
+    });
+
+    test('out-of-range values are rejected', () {
+      expect(
+        () => TriggerMessage.parse(GamepadTrigger.LT, 256),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => TriggerMessage.parse(GamepadTrigger.LT, -1),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('asserts reject out-of-range values at construction', () {
+      expect(
+        () => TriggerMessage(trigger: GamepadTrigger.LT, value: 256),
+        throwsA(isA<AssertionError>()),
+      );
+    });
   });
 
   group('StickMessage', () {
     test('action carries the leftStick/rightStick token', () {
-      final message = StickMessage(
-        stick: GamepadStick.leftStick,
-        x: '0',
-        y: '0',
-      );
-      expect(message.toJson()['action'], 'leftStick');
-    });
-
-    test('parses x and y into numeric getters', () {
-      final message = StickMessage(
-        stick: GamepadStick.rightStick,
-        x: '-32767',
-        y: '32767',
-      );
-      expect(message.xValue, -32767.0);
-      expect(message.yValue, 32767.0);
-    });
-
-    test('a non-numeric axis is rejected', () {
-      final message = StickMessage(
-        stick: GamepadStick.leftStick,
-        x: 'left',
-        y: '0',
-      );
-      expect(() => message.xValue, throwsA(isA<FormatException>()));
-    });
-
-    test('a missing axis is rejected on decode', () {
       expect(
-        () => Message.fromJson({
-          'action': 'leftStick',
-          'value': {'x': '10'},
+        const StickMessage(
+          stick: GamepadStick.leftStick,
+          x: 0,
+          y: 0,
+        ).toJson()['action'],
+        'leftStick',
+      );
+    });
+
+    test('carries both axes under value', () {
+      final json = const StickMessage(
+        stick: GamepadStick.rightStick,
+        x: 255,
+        y: 0,
+      ).toJson();
+      expect(json['value'], {'x': 255, 'y': 0});
+    });
+
+    test('xOffset and yOffset are centred on stickCenter', () {
+      final centred = StickMessage(
+        stick: GamepadStick.leftStick,
+        x: stickCenter,
+        y: stickCenter,
+      );
+      expect(centred.xOffset, 0.0);
+      expect(centred.yOffset, 0.0);
+    });
+
+    test('both ends reach exactly 1.0 and -1.0', () {
+      // The range is signed and symmetric, so neither direction is favoured.
+      final high = const StickMessage(
+        stick: GamepadStick.leftStick,
+        x: stickMax,
+        y: stickMax,
+      );
+      expect(high.xOffset, 1.0);
+      expect(high.yOffset, 1.0);
+
+      final low = const StickMessage(
+        stick: GamepadStick.leftStick,
+        x: stickMin,
+        y: stickMin,
+      );
+      expect(low.xOffset, -1.0);
+      expect(low.yOffset, -1.0);
+    });
+
+    test('is signed 16-bit, matching real Xbox 360 hardware', () {
+      // Not 0..255: the Linux xpad driver reports sticks as signed 16-bit, and
+      // gamypad_pc configures ABS_X/ABS_Y to -32767..32767 to match.
+      expect(stickMin, -32767);
+      expect(stickMax, 32767);
+      expect(stickCenter, 0);
+    });
+
+    test('triggers stay unsigned 0..255, unlike sticks', () {
+      // The asymmetry is in the hardware, so it is deliberate here too.
+      expect(triggerMin, 0);
+      expect(triggerMax, 255);
+    });
+
+    test('round-trips both sticks at the range bounds', () {
+      for (final stick in GamepadStick.values) {
+        for (final pair in [
+          [stickMin, stickMin],
+          [stickCenter, stickCenter],
+          [stickMax, stickMax],
+        ]) {
+          final original = StickMessage(stick: stick, x: pair[0], y: pair[1]);
+          final decoded = Message.fromJson(original.toJson()) as StickMessage;
+          expect(decoded.stick, stick);
+          expect(decoded.x, pair[0]);
+          expect(decoded.y, pair[1]);
+        }
+      }
+    });
+
+    test('a missing axis is rejected', () {
+      expect(
+        () => StickMessage.parse(GamepadStick.leftStick, {'x': 10}),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('a non-object value is rejected', () {
+      expect(
+        () => StickMessage.parse(GamepadStick.leftStick, 128),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('an out-of-range axis is rejected', () {
+      expect(
+        () => StickMessage.parse(GamepadStick.leftStick, {
+          'x': stickMax + 1,
+          'y': 0,
+        }),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => StickMessage.parse(GamepadStick.leftStick, {
+          'x': 0,
+          'y': stickMin - 1,
         }),
         throwsA(isA<FormatException>()),
       );
     });
 
-    test('round-trips both sticks', () {
-      for (final stick in GamepadStick.values) {
-        final original = StickMessage(stick: stick, x: '128', y: '-128');
-        final decoded = Message.fromJson(original.toJson()) as StickMessage;
-        expect(decoded.stick, stick);
-        expect(decoded.xValue, 128.0);
-        expect(decoded.yValue, -128.0);
-      }
+    test('asserts reject out-of-range axes at construction', () {
+      expect(
+        () =>
+            StickMessage(stick: GamepadStick.leftStick, x: stickMax + 1, y: 0),
+        throwsA(isA<AssertionError>()),
+      );
     });
   });
 
-  group('unknown actions', () {
-    test('are rejected', () {
+  group('malformed messages', () {
+    test('an unknown action is rejected', () {
       expect(
-        () => Message.fromJson({'action': 'teleport'}),
+        () => Message.fromJson({'action': 'teleport', 'value': 1}),
         throwsA(isA<FormatException>()),
       );
     });
 
-    test('a message with no type and no action is rejected', () {
+    test('a message with neither type nor action is rejected', () {
       expect(
-        () => Message.fromJson({'btn': 'A'}),
+        () => Message.fromJson({'value': 1}),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('a missing value is rejected', () {
+      expect(
+        () => Message.fromJson({'action': 'A'}),
         throwsA(isA<FormatException>()),
       );
     });
