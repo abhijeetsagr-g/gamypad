@@ -1,0 +1,212 @@
+import 'package:flutter/material.dart' hide ConnectionState;
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gamypad_controller/src/connection/connection_target.dart';
+import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
+import 'package:gamypad_controller/src/ui/view/qr_scan_view.dart';
+import 'package:gamypad_controller/src/ui/widgets/home/connect_button.dart';
+import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
+import 'package:gamypad_controller/src/ui/widgets/home/error_banner.dart';
+import 'package:gamypad_controller/src/ui/widgets/home/home_palette.dart';
+import 'package:gamypad_controller/src/ui/widgets/home/target_fields.dart';
+
+class HomeView extends ConsumerStatefulWidget {
+  const HomeView({super.key});
+
+  @override
+  ConsumerState<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends ConsumerState<HomeView> {
+  final _host = TextEditingController();
+  final _port = TextEditingController();
+
+  UdpTarget? _target;
+  String? _validationError;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    _host.dispose();
+    _port.dispose();
+    super.dispose();
+  }
+
+  /// Opens the scanner and adopts whatever it reads.
+  Future<void> _scan() async {
+    final scanned = await Navigator.of(
+      context,
+    ).push<UdpTarget>(MaterialPageRoute(builder: (_) => const QrScanView()));
+    if (scanned == null || !mounted) return;
+
+    setState(() {
+      _host.text = scanned.host;
+      _port.text = scanned.port.toString();
+      _target = scanned;
+      _validationError = null;
+    });
+  }
+
+  Future<void> _connect() async {
+    final target = _target;
+    if (target == null) {
+      setState(() => _validationError = _invalidPairMessage());
+      return;
+    }
+
+    await ref.read(connectionControllerProvider.notifier).connect(target);
+
+    if (!mounted) return;
+    FocusScope.of(context).unfocus();
+  }
+
+  /// Why the pair was refused, in terms of what the fields hold.
+  String _invalidPairMessage() {
+    if (_host.text.trim().isEmpty && _port.text.trim().isEmpty) {
+      return 'Enter an address and port, or scan the QR code on your PC.';
+    }
+    if (_port.text.trim().isEmpty) return 'Enter a port between 1 and 65535.';
+    return 'That is not an address Gamypad can connect to. '
+        'Check the address and port, or scan the QR code again.';
+  }
+
+  Future<void> _disconnect() =>
+      ref.read(connectionControllerProvider.notifier).disconnect();
+
+  @override
+  Widget build(BuildContext context) {
+    final connection = ref.watch(connectionControllerProvider);
+    final connected = connection.isConnected;
+    final error = _validationError ?? connection.error;
+
+    return Scaffold(
+      backgroundColor: HomePalette.background,
+      appBar: AppBar(
+        backgroundColor: HomePalette.background,
+        elevation: 0,
+        title: const Text(
+          'GAMYPAD',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 6,
+            fontSize: 18,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: Center(
+              child: ConnectionStatusBadge(status: connection.status),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
+              // Room for the keyboard: the port field sits low enough that
+              // adjustResize alone would leave it under the input.
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'WIRELESS CONTROLLER',
+                    style: TextStyle(
+                      color: HomePalette.muted,
+                      fontSize: 11,
+                      letterSpacing: 3,
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  TargetFields(
+                    host: _host,
+                    port: _port,
+                    onChanged: (target) => setState(() {
+                      _target = target;
+                      _validationError = null;
+                    }),
+                  ),
+
+                  if (error case final message?) ...[
+                    const SizedBox(height: 16),
+                    ErrorBanner(message: message),
+                  ],
+
+                  const SizedBox(height: 32),
+
+                  // Disabled while connected: the fields are the inputs to a
+                  // new attempt, and changing them under a live socket would
+                  // read as though the link had moved.
+                  _ScanButton(enabled: !connected, onPressed: _scan),
+
+                  const SizedBox(height: 12),
+
+                  ConnectButton(
+                    status: connection.status,
+                    busy: connection.busy,
+                    enabled: _target != null,
+                    onConnect: connected ? _disconnect : _connect,
+                  ),
+
+                  if (connected) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _disconnect,
+                      style: TextButton.styleFrom(
+                        foregroundColor: HomePalette.muted,
+                      ),
+                      child: const Text('DISCONNECT'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the QR scanner.
+class _ScanButton extends StatelessWidget {
+  const _ScanButton({required this.enabled, required this.onPressed});
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      child: OutlinedButton.icon(
+        onPressed: enabled ? onPressed : null,
+        icon: const Icon(Icons.qr_code_scanner, size: 20),
+        label: const Text('SCAN QR'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: HomePalette.accent,
+          disabledForegroundColor: HomePalette.dim,
+          side: const BorderSide(color: HomePalette.accent),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 3,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
