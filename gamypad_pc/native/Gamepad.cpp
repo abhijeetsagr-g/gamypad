@@ -172,7 +172,7 @@ void Gamepad::releaseKey(const std::string &key) {
   emit(EV_SYN, SYN_REPORT, 0);
 }
 
-// Type = 1 -> left stick or 0 = right stick. X and Y are axes
+// Type = 1 -> right stick or 0 = left stick. X and Y are axes
 void Gamepad::setAxis(int type, int valueX, int valueY) {
   if (type == 0) { // left stick
     emit(EV_ABS, ABS_X, valueX);

@@ -21,14 +21,6 @@ class ServerState {
   });
 
   bool get isRunning => connection != ConnectionState.idle;
-
-  /// Whether a controller is attached right now.
-  ///
-  /// Exposed here so widgets never have to name [ConnectionState]: Flutter
-  /// ships an unrelated enum of the same name, so every file that imported
-  /// both `material.dart` and `message_socket.dart` became an ambiguous
-  /// import. Keeping the comparison on the state leaves `ConnectionState`
-  /// referenced only by files that do not import Material.
   bool get isConnected => connection == ConnectionState.connected;
 
   /// Sentinel distinguishing "not passed" from "passed null". Without it as the

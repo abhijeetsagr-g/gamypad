@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart' hide ConnectionState;
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
 import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
+import 'package:gamypad_controller/src/ui/view/controller_editor_view.dart';
+import 'package:gamypad_controller/src/ui/view/controller_view.dart';
 import 'package:gamypad_controller/src/ui/view/qr_scan_view.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connect_button.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
@@ -25,14 +26,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
   String? _validationError;
 
   @override
-  void initState() {
-    super.initState();
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  }
-
-  @override
   void dispose() {
-    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     _host.dispose();
     _port.dispose();
     super.dispose();
@@ -78,6 +72,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
   Future<void> _disconnect() =>
       ref.read(connectionControllerProvider.notifier).disconnect();
+
+  Future<void> _play() => Navigator.of(
+    context,
+  ).push<void>(MaterialPageRoute(builder: (_) => const ControllerView()));
+
+  Future<void> _editLayout() => Navigator.of(
+    context,
+  ).push<void>(MaterialPageRoute(builder: (_) => const ControllerEditorView()));
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +172,49 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       child: const Text('DISCONNECT'),
                     ),
                   ],
+
+                  const SizedBox(height: 32),
+
+                  // Not gated on the connection. Holding a pad before there is
+                  // anything to hold it for is a real state, and the play
+                  // surface says why presses are not arriving instead of
+                  // refusing to open.
+                  SizedBox(
+                    height: 54,
+                    child: FilledButton.icon(
+                      onPressed: _play,
+                      icon: const Icon(Icons.sports_esports, size: 20),
+                      label: const Text('GAMEPAD'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: HomePalette.accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 3,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  TextButton.icon(
+                    onPressed: _editLayout,
+                    icon: const Icon(Icons.tune, size: 18),
+                    label: const Text('EDIT LAYOUT'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: HomePalette.muted,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -14,20 +14,12 @@ class UdpTransport implements GamepadTransport {
     this.watchdogInterval = const Duration(seconds: 5),
   });
 
-  /// How often to [Ping]. Cheap, and it doubles as the server's
-  /// "something is still there" signal.
   final Duration pingInterval;
-
-  /// How long the PC may go unheard before the link is declared lost.
   final Duration watchdogInterval;
 
   RawDatagramSocket? _socket;
 
-  /// Every address [ConnectionTarget.host] resolved to.
   List<InternetAddress> _resolved = const [];
-
-  /// Where sends actually go: the first resolved address, on the port the PC
-  /// is listening on.
   InternetAddress? _target;
   int? _targetPort;
 
@@ -70,25 +62,18 @@ class UdpTransport implements GamepadTransport {
       _target = addresses.first;
       _targetPort = target.port;
 
-      // `onError` and `onDone` both mean the socket died on its own. Easy to
-      // wire one and forget the other; both are real failure modes.
       socket.listen(
         _onEvent,
         onError: (Object error, StackTrace _) => _onSocketGone(),
         onDone: _onSocketGone,
       );
 
-      // Grace period. Without a baseline the watchdog has nothing to measure,
-      // and the instant the first Pong lands any hiccup would trip it.
       _lastPong = DateTime.now();
       _startPing();
       _startWatchdog();
 
       _status.add(ConnectionStatus.connected);
     } catch (_) {
-      // A failed connect must leave nothing running — the contract says so,
-      // and a half-open socket is the worst outcome: the UI says disconnected
-      // while writes go nowhere.
       _teardown();
       _status.add(ConnectionStatus.disconnected);
       rethrow; // The caller needs the reason; connect_view shows it to the user.

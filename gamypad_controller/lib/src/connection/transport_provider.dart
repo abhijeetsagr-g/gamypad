@@ -14,6 +14,4 @@ import 'package:gamypad_controller/src/connection/udp_transport.dart';
 /// the input layer can depend on it without either depending on the other. The
 /// pure files — `udp_transport.dart`, `gamepad_input.dart` — stay free of
 /// Riverpod, so they can still be tested with a plain `dart test`.
-final transportProvider = Provider<GamepadTransport>(
-  (ref) => UdpTransport(),
-);
+final transportProvider = Provider<GamepadTransport>((ref) => UdpTransport());

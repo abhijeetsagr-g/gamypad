@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_pc/src/ui/state/notifier.dart';
+import 'package:gamypad_pc/src/ui/view/gamepad_test_view.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/error_banner.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/home_palette.dart';
@@ -33,6 +34,18 @@ class HomeView extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: ConnectionStatusBadge(connection: server.connection),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: IconButton(
+              tooltip: 'Gamepad test',
+              icon: const Icon(Icons.sports_esports, color: HomePalette.accent),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const GamepadTestView(),
+                ),
+              ),
+            ),
           ),
         ],
       ),

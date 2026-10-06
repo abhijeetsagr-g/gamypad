@@ -1,6 +1,6 @@
 name: gamypad_controller
 description: Android half of Gamypad — turns a phone into a wireless Xbox 360 controller.
-publish_to: 'none'
+publish_to: "none"
 
 # Keep in sync with ../gamypad_pc/pubspec.yaml — the two halves must ship
 # matching versions because they share a wire protocol.
@@ -12,12 +12,19 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.2.1
+  protocol:
+    path: ../protocol
+  # The controller layout is one JSON string. No table, no migration.
+  shared_preferences: ^2.5.3
   mobile_scanner: ^7.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  # Matches gamypad_pc: the connection layer is pure Dart, so its tests run
+  # under a plain `dart test` with no Flutter test harness.
+  test: ^1.25.0
 
 flutter:
   uses-material-design: true

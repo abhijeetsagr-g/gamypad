@@ -25,7 +25,7 @@ class GamepadSession {
   Future<void> start() async {
     _trace('start() called');
     _subscription = socket.messages.listen(
-      _apply,
+      apply,
       onError: (Object error, StackTrace stack) {
         // Rethrow so it surfaces as an uncaught async error. Without this the
         // first exception (e.g. /dev/uinput going away mid-session) cancels the
@@ -65,7 +65,12 @@ class GamepadSession {
     device.dispose();
   }
 
-  void _apply(Message message) {
+  /// Feeds one message to the device.
+  ///
+  /// Public because the in-app testing ground drives the session directly,
+  /// with no socket in the way. It is the same path an incoming packet takes,
+  /// so anything this exercises is genuinely covered.
+  void apply(Message message) {
     switch (message) {
       case ButtonMessage(:final button, :final pressed):
         _trace('apply button ${button.name} -> ${pressed ? 1 : 0}');

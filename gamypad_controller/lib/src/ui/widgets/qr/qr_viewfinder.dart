@@ -42,10 +42,9 @@ class _ViewfinderPainter extends CustomPainter {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(Offset.zero & size),
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(window, const Radius.circular(12)),
-          ),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(window, const Radius.circular(12)),
+        ),
       ),
       scrim,
     );

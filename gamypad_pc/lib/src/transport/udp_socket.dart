@@ -52,6 +52,9 @@ class UdpSocket implements MessageSocket {
     _startWatchdog();
   }
 
+  // Used for only reply for pings
+  // (connection health / watchdogs)
+
   @override
   void send(Message message) {
     // Must target the client's port, not our own bound port.
