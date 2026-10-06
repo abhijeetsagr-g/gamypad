@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// The pairing address, selectable and with a copy button.
-///
-/// Shown as text as well as in the QR code because scanning is not always an
-/// option, and this is otherwise the only place the ephemeral port is visible.
 class PairingAddress extends StatelessWidget {
   const PairingAddress({super.key, required this.address});
 

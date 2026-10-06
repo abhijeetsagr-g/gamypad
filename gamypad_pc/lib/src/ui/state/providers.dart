@@ -6,11 +6,11 @@ import 'package:gamypad_pc/src/device/uinput_device.dart';
 import 'package:gamypad_pc/src/session/gamepad_session.dart';
 import 'package:gamypad_pc/src/transport/message_socket.dart';
 import 'package:gamypad_pc/src/transport/udp_socket.dart';
+import 'package:gamypad_pc/src/ui/state/log_controller.dart';
+import 'package:protocol/protocol.dart';
 
-/// Overridden in tests.
 final socketProvider = Provider<MessageSocket>((ref) => UdpSocket());
 
-/// Overridden in tests. The real one needs /dev/uinput.
 final deviceProvider = Provider<GamepadDevice>((ref) => UinputDevice());
 
 final sessionProvider = Provider<GamepadSession>((ref) {
@@ -21,6 +21,14 @@ final sessionProvider = Provider<GamepadSession>((ref) {
   ref.onDispose(session.dispose);
   return session;
 });
+
+final socketMessagesProvider = StreamProvider<Message>((ref) {
+  return ref.watch(socketProvider).messages;
+});
+
+final logControllerProvider = NotifierProvider<LogController, LogState>(
+  LogController.new,
+);
 
 final localIpProvider = FutureProvider<String>((ref) async {
   final interfaces = await NetworkInterface.list(

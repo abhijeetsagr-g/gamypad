@@ -1,14 +1,7 @@
-// Flutter ships its own ConnectionState in widgets/async.dart, so it is hidden
-// here and the transport's enum reads unqualified.
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:gamypad_pc/src/transport/message_socket.dart';
-import 'package:gamypad_pc/src/ui/widgets/home/home_palette.dart';
+import 'package:gamypad_pc/src/utils/app_theme.dart';
 
-/// The app bar's status readout: a label and a dot in the matching colour.
-///
-/// Owns the only mapping from [ConnectionState] to presentation, so the label
-/// and the colour can never disagree — the old page derived three strings from
-/// two booleans and had to keep them in sync by hand.
 class ConnectionStatusBadge extends StatelessWidget {
   const ConnectionStatusBadge({super.key, required this.connection});
 
@@ -18,13 +11,13 @@ class ConnectionStatusBadge extends StatelessWidget {
       switch (connection) {
         ConnectionState.connected => (
           label: 'CONNECTED',
-          color: HomePalette.accent,
+          color: ColorPalette.accent,
         ),
         ConnectionState.listening => (
           label: 'WAITING',
-          color: HomePalette.waiting,
+          color: ColorPalette.waiting,
         ),
-        ConnectionState.idle => (label: 'OFF', color: HomePalette.dim),
+        ConnectionState.idle => (label: 'OFF', color: ColorPalette.muted),
       };
 
   @override
@@ -37,8 +30,6 @@ class ConnectionStatusBadge extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           child: Text(
             status.label,
-            // Keyed so AnimatedSwitcher cross-fades on change instead of
-            // updating the text in place.
             key: ValueKey(status.label),
             style: TextStyle(
               color: status.color,

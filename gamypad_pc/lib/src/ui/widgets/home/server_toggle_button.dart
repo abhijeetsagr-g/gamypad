@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gamypad_pc/src/ui/widgets/home/home_palette.dart';
+import 'package:gamypad_pc/src/utils/app_theme.dart';
 
-/// Start/stop control.
-///
-/// Renders three labels for four states: while [busy] the server is mid
-/// transition, so the label names the action in flight rather than the state
-/// it is heading to. That is why it takes `busy` and `isRunning` separately
-/// instead of a single enum.
 class ServerToggleButton extends StatelessWidget {
   const ServerToggleButton({
     super.key,
@@ -34,13 +28,12 @@ class ServerToggleButton extends StatelessWidget {
       width: 220,
       height: 50,
       child: ElevatedButton(
-        // Busy guards against a double tap racing two binds.
         onPressed: busy ? null : (isRunning ? onStop : onStart),
         style: ElevatedButton.styleFrom(
           backgroundColor: isRunning
-              ? HomePalette.stopSurface
-              : HomePalette.accent,
-          disabledBackgroundColor: HomePalette.dim,
+              ? ColorPalette.danger
+              : ColorPalette.accent,
+          disabledBackgroundColor: ColorPalette.muted,
           foregroundColor: isRunning ? Colors.white : Colors.black,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           elevation: 0,

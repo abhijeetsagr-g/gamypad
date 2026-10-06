@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_pc/src/ui/state/notifier.dart';
-import 'package:gamypad_pc/src/ui/view/gamepad_test_view.dart';
+import 'package:gamypad_pc/src/ui/view/log_view.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/error_banner.dart';
-import 'package:gamypad_pc/src/ui/widgets/home/home_palette.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/pairing_panel.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/server_toggle_button.dart';
 
@@ -17,9 +16,7 @@ class HomeView extends ConsumerWidget {
     final controller = ref.read(serverControllerProvider.notifier);
 
     return Scaffold(
-      backgroundColor: HomePalette.background,
       appBar: AppBar(
-        backgroundColor: HomePalette.background,
         elevation: 0,
         title: const Text(
           'GAMYPAD',
@@ -38,13 +35,14 @@ class HomeView extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: IconButton(
-              tooltip: 'Gamepad test',
-              icon: const Icon(Icons.sports_esports, color: HomePalette.accent),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const GamepadTestView(),
-                ),
-              ),
+              tooltip: 'Log',
+              icon: const Icon(Icons.games),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LogView()),
+                );
+              },
             ),
           ),
         ],
@@ -77,17 +75,9 @@ class HomeView extends ConsumerWidget {
                   busy: server.busy,
                   isRunning: server.isRunning,
                   onStart: () {
-                    debugPrint(
-                      '[view] press -> start (busy=${server.busy} '
-                      'isRunning=${server.isRunning})',
-                    );
                     controller.start();
                   },
                   onStop: () {
-                    debugPrint(
-                      '[view] press -> stop (busy=${server.busy} '
-                      'isRunning=${server.isRunning})',
-                    );
                     controller.stop();
                   },
                 ),
