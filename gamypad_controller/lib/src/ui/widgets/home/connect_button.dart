@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_controller/src/connection/connection_status.dart';
-import 'package:gamypad_controller/src/ui/widgets/home/home_palette.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 
-/// The connect control.
-///
-/// Renders four labels across five states: while [busy] the attempt is in
-/// flight, so the label names what is happening rather than the state being
-/// moved towards. That is why it takes [status] and [busy] separately instead of
-/// a single flag.
 class ConnectButton extends StatelessWidget {
   const ConnectButton({
     super.key,
@@ -18,13 +12,7 @@ class ConnectButton extends StatelessWidget {
   });
 
   final ConnectionStatus status;
-
-  /// An attempt is in flight. Disables the button, so a double tap cannot race
-  /// two binds.
   final bool busy;
-
-  /// Whether the fields hold a usable address. The button says why it is
-  /// disabled by staying quiet about it, and the fields show the parse failure.
   final bool enabled;
 
   final VoidCallback onConnect;
@@ -46,16 +34,14 @@ class ConnectButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: busy || !enabled ? null : onConnect,
         style: ElevatedButton.styleFrom(
-          backgroundColor: HomePalette.accent,
-          // A lost connection is the one state where the button must look
-          // inviting: the user is being asked to act.
+          backgroundColor: ColorPalette.accent,
           disabledBackgroundColor: connected
-              ? HomePalette.surface
-              : HomePalette.dim,
+              ? ColorPalette.dim
+              : ColorPalette.dim,
           foregroundColor: Colors.black,
           disabledForegroundColor: connected
-              ? HomePalette.accent
-              : HomePalette.dim,
+              ? ColorPalette.accent
+              : ColorPalette.dim,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           elevation: 0,
         ),

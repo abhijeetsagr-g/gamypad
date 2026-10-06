@@ -8,8 +8,8 @@ import 'package:gamypad_controller/src/ui/view/qr_scan_view.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connect_button.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/error_banner.dart';
-import 'package:gamypad_controller/src/ui/widgets/home/home_palette.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/target_fields.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 
 class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
@@ -88,9 +88,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     final error = _validationError ?? connection.error;
 
     return Scaffold(
-      backgroundColor: HomePalette.background,
       appBar: AppBar(
-        backgroundColor: HomePalette.background,
         elevation: 0,
         title: const Text(
           'GAMYPAD',
@@ -115,8 +113,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: SingleChildScrollView(
-              // Room for the keyboard: the port field sits low enough that
-              // adjustResize alone would leave it under the input.
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,7 +120,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   const Text(
                     'WIRELESS CONTROLLER',
                     style: TextStyle(
-                      color: HomePalette.muted,
+                      color: ColorPalette.muted,
                       fontSize: 11,
                       letterSpacing: 3,
                     ),
@@ -148,9 +144,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
                   const SizedBox(height: 32),
 
-                  // Disabled while connected: the fields are the inputs to a
-                  // new attempt, and changing them under a live socket would
-                  // read as though the link had moved.
                   _ScanButton(enabled: !connected, onPressed: _scan),
 
                   const SizedBox(height: 12),
@@ -167,7 +160,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     TextButton(
                       onPressed: _disconnect,
                       style: TextButton.styleFrom(
-                        foregroundColor: HomePalette.muted,
+                        foregroundColor: ColorPalette.muted,
                       ),
                       child: const Text('DISCONNECT'),
                     ),
@@ -175,10 +168,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
                   const SizedBox(height: 32),
 
-                  // Not gated on the connection. Holding a pad before there is
-                  // anything to hold it for is a real state, and the play
-                  // surface says why presses are not arriving instead of
-                  // refusing to open.
                   SizedBox(
                     height: 54,
                     child: FilledButton.icon(
@@ -186,7 +175,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       icon: const Icon(Icons.sports_esports, size: 20),
                       label: const Text('GAMEPAD'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: HomePalette.accent,
+                        backgroundColor: ColorPalette.accent,
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
@@ -207,7 +196,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     icon: const Icon(Icons.tune, size: 18),
                     label: const Text('EDIT LAYOUT'),
                     style: TextButton.styleFrom(
-                      foregroundColor: HomePalette.muted,
+                      foregroundColor: ColorPalette.muted,
                       textStyle: const TextStyle(
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
@@ -241,9 +230,9 @@ class _ScanButton extends StatelessWidget {
         icon: const Icon(Icons.qr_code_scanner, size: 20),
         label: const Text('SCAN QR'),
         style: OutlinedButton.styleFrom(
-          foregroundColor: HomePalette.accent,
-          disabledForegroundColor: HomePalette.dim,
-          side: const BorderSide(color: HomePalette.accent),
+          foregroundColor: ColorPalette.accent,
+          disabledForegroundColor: ColorPalette.dim,
+          side: const BorderSide(color: ColorPalette.accent),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w800,

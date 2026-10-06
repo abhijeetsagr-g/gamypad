@@ -7,7 +7,6 @@ import 'package:gamypad_controller/src/connection/connection_target.dart';
 import 'package:gamypad_controller/src/connection/gamepad_transport.dart';
 import 'package:protocol/protocol.dart';
 
-/// [GamepadTransport] over UDP — the only transport Gamypad ships today.
 class UdpTransport implements GamepadTransport {
   UdpTransport({
     this.pingInterval = const Duration(seconds: 3),
@@ -26,13 +25,9 @@ class UdpTransport implements GamepadTransport {
   Timer? _pingTimer;
   Timer? _watchdog;
 
-  /// When we last heard a [Pong]. The watchdog's whole input.
   DateTime? _lastPong;
-
-  /// Set while this transport is deliberately shutting down.
   bool _tearingDown = false;
 
-  /// Broadcast, created once, never closed.
   final _status = StreamController<ConnectionStatus>.broadcast();
   final _incoming = StreamController<Message>.broadcast();
 
@@ -76,7 +71,7 @@ class UdpTransport implements GamepadTransport {
     } catch (_) {
       _teardown();
       _status.add(ConnectionStatus.disconnected);
-      rethrow; // The caller needs the reason; connect_view shows it to the user.
+      rethrow; // The casller needs the reason; connect_view shows it to the user.
     }
   }
 
@@ -99,13 +94,11 @@ class UdpTransport implements GamepadTransport {
     _targetPort = null;
     _resolved = const [];
 
-    // Nulled before closing, so the close's `onDone` cannot re-enter teardown.
     final socket = _socket;
     _socket = null;
     socket?.close();
   }
 
-  /// The socket died without us asking the peer went away mid-session.
   void _onSocketGone() {
     if (_tearingDown || _socket == null) return;
     _teardown();
@@ -114,8 +107,6 @@ class UdpTransport implements GamepadTransport {
 
   @override
   Future<void> send(Message message) async {
-    // Snapshot into locals: this reads better than four nullable dereferences,
-    // and the null-guard is the "am I connected?" check the interface promises.
     final socket = _socket;
     final address = _target;
     final port = _targetPort;
@@ -153,8 +144,6 @@ class UdpTransport implements GamepadTransport {
 
     final Message message;
     try {
-      // utf8.decode throws on bad bytes, jsonDecode on bad JSON, and
-      // Message.fromJson on the wrong shape
       final json = jsonDecode(utf8.decode(datagram.data));
       if (json is! Map<String, dynamic>) return;
       message = Message.fromJson(json);
@@ -162,8 +151,7 @@ class UdpTransport implements GamepadTransport {
       return;
     }
 
-    // The PC answers pings and says nothing else. A [Ping] or an input message
-    // arriving here is a protocol mistake, not something to act on.
+    // The PC answers pings and says nothing else.
     if (message is! Pong) return;
 
     _lastPong = DateTime.now();

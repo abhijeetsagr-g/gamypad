@@ -5,8 +5,8 @@ import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
 import 'package:gamypad_controller/src/ui/state/input_provider.dart';
 import 'package:gamypad_controller/src/ui/state/layout_controller.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
-import 'package:gamypad_controller/src/ui/widgets/pad/pad_palette.dart';
 import 'package:gamypad_controller/src/ui/widgets/pad/pad_renderer.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 
 class ControllerView extends ConsumerStatefulWidget {
   const ControllerView({super.key});
@@ -17,13 +17,12 @@ class ControllerView extends ConsumerStatefulWidget {
 
 class _ControllerViewState extends ConsumerState<ControllerView>
     with WidgetsBindingObserver {
-  // Replace InputController with your provider's actual type if you prefer.
   late final _input = ref.read(inputProvider);
 
   @override
   void initState() {
     super.initState();
-    _input; // force the lazy init now, while ref is still safe
+    _input;
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -53,7 +52,7 @@ class _ControllerViewState extends ConsumerState<ControllerView>
         if (didPop) input.releaseAll();
       },
       child: Scaffold(
-        backgroundColor: PadPalette.background,
+        backgroundColor: ColorPalette.background,
         body: SafeArea(
           child: Stack(
             children: [
@@ -131,7 +130,6 @@ class _LinkNotice extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
       child: Material(
-        color: PadPalette.surface,
         elevation: 6,
         borderRadius: BorderRadius.circular(8),
         child: Container(

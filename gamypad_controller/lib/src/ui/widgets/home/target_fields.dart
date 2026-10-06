@@ -1,19 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
-import 'package:gamypad_controller/src/ui/widgets/home/home_palette.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 
-/// Address and port, as two fields that together mean one thing.
-///
-/// Reports a parsed [UdpTarget] rather than two strings, so the caller never
-/// has to decide what a valid pair is. Validation goes through
-/// [UdpTarget.tryParse] — the same gate a scanned QR code passes through — so
-/// typing an address by hand cannot succeed where a scan would fail, or the
-/// reverse.
-///
-/// The controllers are owned by the caller because they outlive this widget: a
-/// scan writes into them, and the prefilled target from the last connection is
-/// remembered across rebuilds.
 class TargetFields extends StatelessWidget {
   const TargetFields({
     super.key,
@@ -26,11 +15,7 @@ class TargetFields extends StatelessWidget {
   final TextEditingController host;
   final TextEditingController port;
 
-  /// Called with the parsed target, or null while the pair is not usable.
   final ValueChanged<UdpTarget?> onChanged;
-
-  /// Set by the host to raise the keyboard when the user has no better route in,
-  /// which is never after a scan.
   final bool autofocus;
 
   @override
@@ -40,8 +25,6 @@ class TargetFields extends StatelessWidget {
       children: [
         _Field(
           label: 'ADDRESS',
-          // Not number-only: a hostname is a legal target and `UdpTarget.parse`
-          // accepts one, so the keyboard must be able to produce letters.
           keyboardType: TextInputType.text,
           controller: host,
           autofocus: autofocus,
@@ -60,11 +43,6 @@ class TargetFields extends StatelessWidget {
     );
   }
 
-  /// Re-validates the pair and reports it.
-  ///
-  /// `host:port` is reassembled rather than validated field by field, because
-  /// that string is exactly what [UdpTarget.parse] accepts — one parser, no
-  /// second opinion about what a valid port is.
   void _report() {
     final host = this.host.text.trim();
     final port = this.port.text.trim();
@@ -101,7 +79,7 @@ class _Field extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: HomePalette.muted,
+            color: ColorPalette.muted,
             fontSize: 10,
             letterSpacing: 3,
           ),
@@ -112,24 +90,22 @@ class _Field extends StatelessWidget {
           autofocus: autofocus,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          // The field echoes what the user typed, so digits are not worth
-          // announcing and paste of a full address should stay possible.
           inputFormatters: keyboardType == TextInputType.number
               ? [FilteringTextInputFormatter.digitsOnly]
               : null,
           style: const TextStyle(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
             filled: true,
-            fillColor: HomePalette.surface,
+            fillColor: ColorPalette.dim,
             hintText: hint,
-            hintStyle: const TextStyle(color: HomePalette.dim),
+            hintStyle: const TextStyle(color: ColorPalette.dim),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: HomePalette.accent),
+              borderSide: const BorderSide(color: ColorPalette.accent),
             ),
           ),
         ),

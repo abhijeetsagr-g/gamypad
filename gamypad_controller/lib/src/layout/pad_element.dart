@@ -73,7 +73,6 @@ sealed class PadElement {
     throw FormatException('Unknown pad element id: "$id"');
   }
 
-  /// Direction buttons, which live inside [DpadElement] rather than beside it.
   static const _dpadDirections = {'UP', 'DOWN', 'LEFT', 'RIGHT'};
 
   String get id;
@@ -84,26 +83,14 @@ sealed class PadElement {
   MinMax get minSize;
   MinMax get maxSize;
 
-  /// Pulls [value] into this element's legal range.
   double fit(double value) =>
       value.clamp(minSize.min, maxSize.max ?? double.infinity);
 
-  /// The size this element would take for a drag of [width] × [height].
-  ///
-  /// Square types collapse the two into one side; fixed types ignore the drag
-  /// entirely and keep their own.
   Size resolveSize(double width, double height);
 
-  /// [requested] with this element's size rules applied, then kept inside
-  /// [canvas].
-  ///
-  /// Total, and free of overlap rules: an editor drag wants to see the position
-  /// it asked for even while it is invalid, so rejection happens one layer up.
   Rect constrain(Rect requested, Size canvas) {
     final size = resolveSize(requested.width, requested.height);
 
-    // A canvas smaller than the element clamps to zero rather than to a
-    // negative range, which `clamp` would treat as inverted.
     final maxX = math.max(0.0, canvas.width - size.width);
     final maxY = math.max(0.0, canvas.height - size.height);
 

@@ -1,7 +1,4 @@
-/// Gives a random port
 const int _minPort = 1;
-
-/// Highest valid port.
 const int _maxPort = 65535;
 
 sealed class ConnectionTarget {

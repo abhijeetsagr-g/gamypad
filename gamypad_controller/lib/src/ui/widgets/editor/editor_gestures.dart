@@ -5,7 +5,6 @@ import 'package:gamypad_controller/src/layout/controller_layout.dart';
 import 'package:gamypad_controller/src/ui/widgets/editor/selection_overlay.dart';
 import 'package:gamypad_controller/src/ui/widgets/pad/pad_renderer.dart';
 
-/// Arranging the pad: tap to select, drag to move, corner handle to resize.
 class EditorGestures extends StatefulWidget {
   const EditorGestures({
     super.key,
@@ -64,8 +63,6 @@ class _EditorGesturesState extends State<EditorGestures> {
     final selected = _selected;
     final current = selected == null ? null : _shown[selected];
 
-    // The handle wins over everything, so a resize can start from a grip that
-    // overhangs the corner it belongs to.
     if (current != null &&
         current.resizable &&
         SelectionOverlay.handleRectFor(
@@ -111,7 +108,6 @@ class _EditorGesturesState extends State<EditorGestures> {
 
     final delta = (position - _dragOrigin) / _scale;
     final proposed = switch (_mode) {
-      // Anchored at the opposite corner, so width and height move independently
       _DragMode.resize => Rect.fromLTRB(
         _dragStart.left,
         _dragStart.top,
@@ -153,9 +149,6 @@ class _EditorGesturesState extends State<EditorGestures> {
         final authored = widget.layout.authoredSize;
         final available = constraints.biggest;
 
-        // The same uniform scale PadRenderer would pick for this box, so the
-        // overlay's rects and the gesture layer's coordinates agree with the
-        // pixels on screen.
         _scale = (available.width.isFinite && available.height.isFinite)
             ? math.max(
                 available.width / authored.width,
@@ -192,9 +185,6 @@ class _EditorGesturesState extends State<EditorGestures> {
     );
   }
 
-  /// One recognizer for both modes rather than a nested pair: what a touch means
-  /// is decided here, at pointer-down, instead of being left to the gesture arena
-  /// to work out between competing recognizers.
   Widget _gestures() => Listener(
     behavior: HitTestBehavior.opaque,
     onPointerDown: (event) => _begin(event.localPosition),

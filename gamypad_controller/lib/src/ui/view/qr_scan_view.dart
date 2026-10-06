@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
-import 'package:gamypad_controller/src/ui/widgets/home/home_palette.dart';
 import 'package:gamypad_controller/src/ui/widgets/qr/qr_viewfinder.dart';
 import 'package:gamypad_controller/src/ui/widgets/qr/scan_hint.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QrScanView extends StatefulWidget {
@@ -55,9 +55,7 @@ class _QrScanViewState extends State<QrScanView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
         elevation: 0,
         foregroundColor: Colors.white,
         title: const Text(
@@ -75,9 +73,6 @@ class _QrScanViewState extends State<QrScanView> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  // Square, centred, and never larger than the preview in
-                  // either axis: a window wider than the preview would leave
-                  // the brackets clipped at the sides.
                   final side = constraints.biggest.shortestSide * 0.7;
                   final window = Rect.fromCenter(
                     center: constraints.biggest.center(Offset.zero),
@@ -145,7 +140,7 @@ class _CameraError extends StatelessWidget {
               const Icon(
                 Icons.no_photography_outlined,
                 size: 40,
-                color: HomePalette.muted,
+                color: ColorPalette.muted,
               ),
               const SizedBox(height: 16),
               Text(
@@ -159,7 +154,7 @@ class _CameraError extends StatelessWidget {
                 },
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: HomePalette.muted,
+                  color: ColorPalette.muted,
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -168,8 +163,8 @@ class _CameraError extends StatelessWidget {
               OutlinedButton(
                 onPressed: onRetry,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: HomePalette.accent,
-                  side: const BorderSide(color: HomePalette.accent),
+                  foregroundColor: ColorPalette.accent,
+                  side: const BorderSide(color: ColorPalette.accent),
                 ),
                 child: const Text('TRY AGAIN'),
               ),

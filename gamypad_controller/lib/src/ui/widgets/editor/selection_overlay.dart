@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_controller/src/layout/pad_element.dart';
-import 'package:gamypad_controller/src/ui/widgets/pad/pad_palette.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 
 class SelectionOverlay extends StatelessWidget {
   const SelectionOverlay({
@@ -41,7 +41,7 @@ class SelectionOverlay extends StatelessWidget {
     final selected = element;
     if (selected == null) return const SizedBox.shrink();
 
-    final color = invalid ? PadPalette.invalid : PadPalette.selection;
+    final color = invalid ? ColorPalette.invalid : ColorPalette.selection;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -74,15 +74,15 @@ class _Handle extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: PadPalette.selection,
+        color: ColorPalette.selection,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: PadPalette.background, width: 2),
+        border: Border.all(color: ColorPalette.background, width: 2),
       ),
       child: Center(
         child: Icon(
           Icons.open_in_full,
           size: SelectionOverlay.handleSize * 0.46,
-          color: PadPalette.background,
+          color: ColorPalette.background,
         ),
       ),
     );

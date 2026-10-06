@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamypad_controller/src/connection/connection_status.dart';
-import 'package:gamypad_controller/src/ui/widgets/home/home_palette.dart';
+import 'package:gamypad_controller/src/utils/app_theme.dart';
 
-/// The app bar's status readout: a label and a dot in the matching colour.
-///
-/// Owns the only mapping from [ConnectionStatus] to presentation, so the label
-/// and the colour can never disagree. The old page derived its text from a
-/// single `isConnected` bool, which could not say "connection lost" — the one
-/// state where the user has to act rather than just look.
 class ConnectionStatusBadge extends StatelessWidget {
   const ConnectionStatusBadge({super.key, required this.status});
 
@@ -17,16 +11,16 @@ class ConnectionStatusBadge extends StatelessWidget {
       switch (status) {
         ConnectionStatus.connected => (
           label: 'CONNECTED',
-          color: HomePalette.accent,
+          color: ColorPalette.accent,
         ),
         ConnectionStatus.connecting => (
           label: 'CONNECTING',
-          color: HomePalette.waiting,
+          color: ColorPalette.waiting,
         ),
-        ConnectionStatus.lost => (label: 'LOST', color: HomePalette.danger),
+        ConnectionStatus.lost => (label: 'LOST', color: ColorPalette.danger),
         ConnectionStatus.disconnected => (
           label: 'NOT PAIRED',
-          color: HomePalette.dim,
+          color: ColorPalette.dim,
         ),
       };
 
@@ -41,8 +35,6 @@ class ConnectionStatusBadge extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           child: Text(
             presentation.label,
-            // Keyed so AnimatedSwitcher cross-fades on change instead of
-            // updating the text in place.
             key: ValueKey(presentation.label),
             style: TextStyle(
               color: presentation.color,

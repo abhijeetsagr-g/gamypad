@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Instruction and torch control, below the viewfinder.
-///
-/// Reports torch state back rather than holding it: the caller owns the
-/// [MobileScannerController], and a second copy of "is the torch on" would drift
-/// from the one the camera is actually using.
 class ScanHint extends StatelessWidget {
   const ScanHint({
     super.key,
@@ -15,10 +10,6 @@ class ScanHint extends StatelessWidget {
 
   final bool torchOn;
   final VoidCallback onToggleTorch;
-
-  /// A code that was read but is not a pairing target, shown so the user learns
-  /// that something was seen and rejected rather than concluding the camera is
-  /// broken.
   final String? rejectedCode;
 
   @override
