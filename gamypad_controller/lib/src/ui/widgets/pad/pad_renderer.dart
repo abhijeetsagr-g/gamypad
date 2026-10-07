@@ -19,6 +19,7 @@ class PadRenderer extends StatelessWidget {
     this.onTrigger,
     this.enabled = true,
     this.showCanvas = false,
+    this.digitalTriggers = false,
   });
 
   final ControllerLayout layout;
@@ -29,6 +30,7 @@ class PadRenderer extends StatelessWidget {
 
   final bool enabled;
   final bool showCanvas;
+  final bool digitalTriggers;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +108,7 @@ class PadRenderer extends StatelessWidget {
     ),
     TriggerElement(:final trigger) => PadTrigger(
       label: trigger.name,
+      digital: digitalTriggers,
       onChanged: onTrigger == null
           ? null
           : (value) => onTrigger!(trigger, value),

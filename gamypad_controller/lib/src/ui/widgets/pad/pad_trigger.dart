@@ -4,10 +4,19 @@ import 'package:gamypad_controller/src/utils/app_theme.dart';
 import 'package:protocol/protocol.dart';
 
 class PadTrigger extends StatefulWidget {
-  const PadTrigger({super.key, required this.label, required this.onChanged});
+  const PadTrigger({
+    super.key,
+    required this.label,
+    required this.onChanged,
+    this.digital = false,
+  });
 
   final String label;
   final ValueChanged<int>? onChanged;
+
+  /// When true the trigger is a button: touching it reports [triggerMax]
+  /// regardless of where the finger is.
+  final bool digital;
 
   @override
   State<PadTrigger> createState() => _PadTriggerState();
@@ -23,7 +32,9 @@ class _PadTriggerState extends State<PadTrigger> {
   void _report(double localY, double travel) {
     if (!_live) return;
 
-    final next = TriggerCurve(travel: travel).apply(travel - localY);
+    final next = widget.digital
+        ? triggerMax
+        : TriggerCurve(travel: travel).apply(travel - localY);
     if (next == _value) return;
 
     setState(() => _value = next);

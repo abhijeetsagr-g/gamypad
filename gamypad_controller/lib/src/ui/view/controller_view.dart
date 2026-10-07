@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' hide ConnectionState;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
 import 'package:gamypad_controller/src/ui/state/input_provider.dart';
 import 'package:gamypad_controller/src/ui/state/layout_controller.dart';
+import 'package:gamypad_controller/src/ui/state/setting_controller.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_controller/src/ui/widgets/pad/pad_renderer.dart';
 import 'package:gamypad_controller/src/utils/app_theme.dart';
@@ -46,6 +50,9 @@ class _ControllerViewState extends ConsumerState<ControllerView>
 
     final input = ref.read(inputProvider);
     final layout = ref.watch(layoutControllerProvider).value;
+    final settings = ref.watch(settingControllerProvider).value;
+    final vibrate = settings?.vibrate ?? false;
+    final digitalTriggers = settings?.digitalTriggers ?? false;
 
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
@@ -62,9 +69,17 @@ class _ControllerViewState extends ConsumerState<ControllerView>
                     : PadRenderer(
                         layout: layout,
                         enabled: connection.isConnected,
-                        onButton: (button, pressed) => pressed
-                            ? input.press(button)
-                            : input.release(button),
+                        digitalTriggers: digitalTriggers,
+                        onButton: (button, pressed) {
+                          if (!pressed) {
+                            input.release(button);
+                            return;
+                          }
+                          if (vibrate) {
+                            unawaited(HapticFeedback.vibrate());
+                          }
+                          input.press(button);
+                        },
                         onStick: input.setStick,
                         onTrigger: input.setTrigger,
                       ),

@@ -5,6 +5,7 @@ import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
 import 'package:gamypad_controller/src/ui/view/controller_editor_view.dart';
 import 'package:gamypad_controller/src/ui/view/controller_view.dart';
 import 'package:gamypad_controller/src/ui/view/qr_scan_view.dart';
+import 'package:gamypad_controller/src/ui/view/setting_view.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connect_button.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/error_banner.dart';
@@ -81,6 +82,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
     context,
   ).push<void>(MaterialPageRoute(builder: (_) => const ControllerEditorView()));
 
+  Future<void> _settings() => Navigator.of(
+    context,
+  ).push<void>(MaterialPageRoute(builder: (_) => const SettingView()));
+
   @override
   Widget build(BuildContext context) {
     final connection = ref.watch(connectionControllerProvider);
@@ -100,6 +105,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: _settings,
+            icon: const Icon(Icons.settings, size: 22),
+            color: ColorPalette.muted,
+            tooltip: 'Settings',
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: Center(
