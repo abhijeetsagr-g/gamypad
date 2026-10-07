@@ -5,6 +5,8 @@
 #include <gdk/gdkx.h>
 #endif
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
 #include "flutter/generated_plugin_registrant.h"
 
 struct _MyApplication {
@@ -59,6 +61,16 @@ static void my_application_activate(GApplication *application) {
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
+
+  // Window / taskbar icon, loaded from the bundled asset
+  // (data/flutter_assets/assets/icon.png). A missing icon is not fatal.
+  g_autofree gchar *icon_path = g_build_filename(
+      fl_dart_project_get_assets_path(project), "assets", "icon.png", NULL);
+  GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_path, nullptr);
+  if (icon_pixbuf != nullptr) {
+    gtk_window_set_icon(window, icon_pixbuf);
+    g_clear_object(&icon_pixbuf);
+  }
 
   FlView *view = fl_view_new(project);
   GdkRGBA background_color;
