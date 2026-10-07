@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎮 Gamypad
+# Gamypad
 
 **Turn your Android phone into a wireless gamepad for Linux.**
 
@@ -12,176 +12,124 @@ Gamypad emulates an Xbox 360 controller via the Linux `uinput` subsystem — no 
 [![Android](https://img.shields.io/badge/Android-8.0+-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com)
 [![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)](LICENSE)
 
-> 🚀 **Beta** — APK and Linux binary available on the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page.
+> **Beta** — APK and Linux binary available on the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page.
 
 </div>
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-### 🖥️ Linux App
+### Linux App
 
-| Server Idle | Server Running | QR Code |
-|-------------|----------------|---------|
-| ![idle](screenshots/linux_idle.png) | ![running](screenshots/linux_running.png) | ![qr](screenshots/linux_qr.png) |
+| Server Idle |  QR Code |
+|-------------| --------|
+| ![idle](screenshots/linux_idle.png) | ![qr](screenshots/linux_qr.png) |
 
-### 📱 Android App
+### Android App
 
-| Home | Controller | 
+| Home | Controller |
 |------|------------|
 | ![home](screenshots/android_home.png) | ![controller](screenshots/android_controller.png) |
 
 ---
 
-## ⚙️ How It Works
+## ✨ What It Is
 
-Gamypad has two components:
+Gamypad is two pieces of software that work together:
 
-- **Linux app** — runs a UDP server that receives input from your phone and emulates an Xbox 360 controller via `uinput`
-- **Android app** — connects to the server over WiFi and streams button presses, joystick movements, and trigger inputs in real time
+- **Linux app** — runs a small UDP server on your PC and speaks directly to the
+  kernel's `uinput` interface, so games see your phone as a real Xbox 360
+  controller.
+- **Android app** — connects to that server over WiFi and streams button
+  presses, joystick, and trigger inputs in real time.
 
-Communication is over **UDP** for low-latency input. Both devices must be on the same network — a **phone hotspot** is recommended for the most reliable connection.
+Both devices must be on the same network — a **phone hotspot** is recommended
+for the most reliable, lowest-latency connection.
+
+### Features
+
+- Full Xbox 360 controller: A/B/X/Y, LB/RB, LT/RT, Start, Back, Guide, LS, RS
+- Dual analog sticks with deadzone tuning and D-Pad
+- Automatic pairing via QR code scan (manual IP entry also works)
+- Resize and reposition every pad element with the built-in layout editor
+- Optional haptic feedback and digital-trigger mode
+- Connection watchdog — detects disconnects on both ends automatically
 
 ---
 
-## ✨ Features
-
-- 🎮 Emulates a full Xbox 360 controller via `uinput`
-- 🔘 Full button support — A, B, X, Y, LB, RB, LT, RT, Start, Back, Guide, LS, RS
-- 🕹️ Dual joysticks and D-Pad
-- 📷 Automatic server detection via QR code scan — auto-fills the connection code
-- 🔌 Connection watchdog — detects disconnects on both ends
-- 📶 Wireless input via UDP over WiFi
-
----
-
-## 📋 Requirements
+## Requirements
 
 | | Requirement |
 |---|---|
-| 🖥️ Linux | x86_64, with `uinput` support |
-| 📱 Android | 8.0 (API 26)+ |
-| 📶 Network | Both devices on the same WiFi (phone hotspot recommended) |
+| Linux | x86_64 with `uinput` support, GTK 3 |
+| Android | 8.0 (API 26) or newer |
+| Network | Both devices on the same WiFi |
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Linux
 
-1. Download the latest release zip from the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page
-2. Extract and run the install script:
+1. Download the latest release zip from the
+   [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page.
+2. Extract it and run the install script:
 
-```bash
-unzip Gamypad-x86_64.zip
-chmod +x install.sh
-./install.sh
-```
+   ```bash
+   unzip Gamypad-x86_64.zip
+   chmod +x install.sh
+   ./install.sh
+   ```
 
-3. Log out and back in for group permission changes to take effect
+3. **Log out and back in** so the `uinput` group changes take effect.
+
+The script installs Gamypad to `/opt/gamypad`, adds a desktop entry, and sets up
+the `uinput` udev rules automatically. You can then launch **Gamypad** from your
+application menu or run `gamypad` from a terminal.
 
 ### Android
 
-Download and install the APK from the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases) page.
+Download the APK from the [Releases](https://github.com/abhijeetsagr-g/gamypad/releases)
+page and install it. You may need to allow "install from unknown sources" for
+your browser or file manager.
 
 ---
 
-## 🗂️ Repository layout
+## Usage
 
-One monorepo. The two apps are two halves of a single product that speak a
-shared wire protocol, so they are versioned and released together.
+### First-time setup
 
-```
-gamypad/
-├── gamypad_controller/   Android app  (package: gamypad_controller)
-├── gamypad_pc/           Linux app    (package: gamypad_pc)
-│   ├── native/           C++ uinput sources → libgamepad.so
-│   └── dist/             install.sh, uninstall.sh, build_release.sh
-└── screenshots/
-```
+1. Enable the **hotspot** on your Android phone.
+2. Connect your PC to the phone's hotspot.
 
-> **The wire contract spans both apps.** Button names live in
-> `gamypad_controller/lib/core/utils/btn_code_mapper.dart`, and must match
-> `gamypad_pc/native/Gamepad.cpp` (`keyMap`) and
-> `gamypad_pc/lib/core/gamepad.dart` (the `action` dispatch). Changing one side
-> without the other breaks that input on the PC. Keep both `pubspec.yaml`
-> versions in sync.
+### Every session
 
----
+1. Open **Gamypad** on your PC and click **Start Server** — a QR code with the
+   connection address appears.
+2. Open the **Gamypad** app on your phone and tap the **scan** button.
+3. Point the camera at the QR code — the address fills in automatically.
+   (Or type the address shown on the PC manually.)
+4. Tap **Connect**. The status badge turns green when paired.
+5. Tap **GAMEPAD** to open the controller, then play!
 
-## 🎮 Usage
-
-1. Enable hotspot on your Android phone
-2. Connect your PC to the phone's hotspot
-3. Open **Gamypad** on your PC and click **Start Server**
-4. Open the Android app and tap the QR scanner icon
-5. Scan the QR code shown on the PC — the connection code fills automatically
-6. Tap **Connect** — you're ready to play
+When you're done, hit the stop button on the PC or exit the controller — the
+connection closes on both ends automatically.
 
 ---
 
-## 🗑️ Uninstallation
+## Uninstall
 
 ```bash
-chmod +x uninstall.sh
+chmod +x uninstall.sh   # from the extracted release folder
 ./uninstall.sh
 ```
 
----
-
-## 🏗️ Building from Source
-
-### Prerequisites
-
-- Flutter SDK 3.x+
-- CMake, Clang, GTK3 dev headers
-
-```bash
-sudo pacman -S cmake clang gtk3        # Arch
-sudo apt install cmake clang libgtk-3-dev  # Ubuntu/Debian
-```
-
-### Linux app
-
-```bash
-cd gamypad_pc
-flutter pub get
-flutter build linux --release
-```
-
-### Android app
-
-```bash
-cd gamypad_controller
-flutter pub get
-flutter build apk --release
-```
-
-### Packaging a release
-
-Both artifacts are attached to the same GitHub Release, one per tag:
-
-```bash
-cd gamypad_pc && ./dist/build_release.sh   # → dist/Gamypad-x86_64.zip
-cd gamypad_controller && flutter build apk --release
-```
+On the phone, uninstall the app like any other app.
 
 ---
 
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | Flutter (Dart) |
-| Linux Input | `uinput` subsystem |
-| Transport | UDP (low-latency) |
-| Server Detection | QR code with auto-fill |
-| Connection Health | Watchdog timer (both ends) |
-
----
-
-## 📄 License
+## License
 
 MIT
 

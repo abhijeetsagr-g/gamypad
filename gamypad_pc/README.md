@@ -1,26 +1,58 @@
 # gamypad_pc
 
-The **Linux** half of [Gamypad](../README.md) — runs a UDP server, and emulates
-an Xbox 360 controller through the kernel's `uinput` subsystem.
+The **Linux** half of [Gamypad](../README.md) — receives input over UDP and
+emulates an Xbox 360 controller through the kernel's `uinput` subsystem.
 
-Part of the Gamypad monorepo. See the [root README](../README.md) for the
-protocol, installation, and how the two halves fit together.
+Part of the Gamypad monorepo. See the [root README](../README.md) for
+installation, usage, and how the two halves fit together.
 
 ## Layout
 
 ```
 lib/
-├── core/
-│   ├── gamepad.dart          translates client messages into device calls
-│   ├── gamepad_ffi.dart      dart:ffi bindings to libgamepad.so
-│   └── gamepad_server.dart   UDP server, ping/pong, disconnect watchdog
-└── pages/
-    └── server_page.dart      the whole UI: start/stop, QR code, status
+├── main.dart / app.dart         entry points (dark Flutter theme)
+└── src/
+    ├── device/
+    │   ├── gamepad_device.dart  GamepadDevice interface
+    │   ├── uinput_device.dart   uinput via FFI: buttons, D-pad, sticks, triggers
+    │   └── gamepad_ffi.dart     hand-written dart:ffi bindings to libgamepad.so
+    ├── session/
+    │   └── gamepad_session.dart wires a MessageSocket to a GamepadDevice;
+    │                            start/stop lifecycle, message dispatch
+    ├── transport/
+    │   ├── message_socket.dart  MessageSocket interface
+    │   └── udp_socket.dart      RawDatagramSocket, ping/pong, 5s disconnect
+    │                            watchdog. Flutter-free so it stays testable
+    └── ui/
+        ├── state/               riverpod providers, server/log controllers
+        ├── view/                home (pairing + QR + status), log view
+        └── widgets/             home/* (pairing panel, status badge, ...)
+                                 log/* (log rows + formatting)
 
-native/                    C++ sources for libgamepad.so (the uinput device)
-dist/                      install.sh, uninstall.sh, build_release.sh
-linux/CMakeLists.txt       builds native/*.cpp into libgamepad.so and bundles it
+native/
+├── Gamepad.cpp      the uinput device; `keyMap` maps button names to kernel
+│                    constants (BTN_A, ABS_Z, ...)
+├── GamepadApi.cpp   extern "C" shim used by the bindings
+└── Gamepad.h
+
+linux/               CMake — compiles native/ into libgamepad.so and bundles it
+dist/                build_release.sh, install.sh, uninstall.sh
+assets/              icon.png (also used by the Android app)
 ```
+
+## The wire contract
+
+The shared vocabulary lives in the [`protocol`](../protocol) package (pure
+Dart), so the button names are a single source of truth:
+
+- `protocol/lib/src/vocabulary/buttons.dart` — the wire tokens
+  (`GamepadButton`, `GamepadTrigger`, `GamepadStick`).
+- `native/Gamepad.cpp` — the right-hand column of `keyMap` is kernel constants
+  that cannot live in Dart.
+
+Renaming a wire token is a breaking protocol change: it must be mirrored in
+`keyMap` or that input silently stops working. The two apps are versioned and
+released together — keep the `pubspec.yaml` versions in sync.
 
 ## How the FFI boundary works
 
