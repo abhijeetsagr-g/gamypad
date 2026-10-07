@@ -17,6 +17,7 @@ dependencies:
   # The controller layout is one JSON string. No table, no migration.
   shared_preferences: ^2.5.3
   mobile_scanner: ^7.2.0
+  haptic_feedback: ^0.8.0
 
 dev_dependencies:
   flutter_test:

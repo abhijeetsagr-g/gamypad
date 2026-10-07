@@ -2,16 +2,23 @@ import 'dart:async';
 
 import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/connection/gamepad_transport.dart';
+import 'package:gamypad_controller/src/settings/setting_model.dart';
+import 'package:haptic_feedback/haptic_feedback.dart';
 import 'package:protocol/protocol.dart';
 
 class GamepadInput {
-  GamepadInput({required GamepadTransport transport}) : _transport = transport {
+  GamepadInput({
+    required GamepadTransport transport,
+    required SettingModel settings,
+  }) : _settings = settings,
+       _transport = transport {
     _subscription = _transport.status.listen((status) {
       if (status == ConnectionStatus.connected) _replay();
     });
   }
 
   final GamepadTransport _transport;
+  final SettingModel _settings;
   StreamSubscription<ConnectionStatus>? _subscription;
   final Set<GamepadButton> _held = {};
 
@@ -21,6 +28,7 @@ class GamepadInput {
 
   void press(GamepadButton button) {
     _held.add(button);
+    if (_settings.vibrate) _vibrate();
     _send(ButtonMessage(button: button, pressed: true));
   }
 
@@ -34,7 +42,14 @@ class GamepadInput {
   }
 
   void setTrigger(GamepadTrigger trigger, int value) {
-    _send(TriggerMessage(trigger: trigger, value: value));
+    if (_settings.vibrate && _settings.digitalTriggers) _vibrate();
+
+    _send(
+      TriggerMessage(
+        trigger: trigger,
+        value: _settings.digitalTriggers ? triggerMax : value,
+      ),
+    );
   }
 
   void releaseAll() {
@@ -61,6 +76,10 @@ class GamepadInput {
     for (final button in _held) {
       _send(ButtonMessage(button: button, pressed: true));
     }
+  }
+
+  void _vibrate() {
+    Haptics.vibrate(HapticsType.light);
   }
 
   void _send(Message message) => unawaited(_transport.send(message));
