@@ -6,11 +6,10 @@ class SettingModel {
 
   const SettingModel({this.vibrate = false, this.digitalTriggers = false});
 
-  SettingModel copyWith({bool? vibrate, bool? digitalTriggers}) =>
-      SettingModel(
-        vibrate: vibrate ?? this.vibrate,
-        digitalTriggers: digitalTriggers ?? this.digitalTriggers,
-      );
+  SettingModel copyWith({bool? vibrate, bool? digitalTriggers}) => SettingModel(
+    vibrate: vibrate ?? this.vibrate,
+    digitalTriggers: digitalTriggers ?? this.digitalTriggers,
+  );
 
   String encode() =>
       jsonEncode({'vibrate': vibrate, 'digitalTriggers': digitalTriggers});

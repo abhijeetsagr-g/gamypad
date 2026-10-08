@@ -42,14 +42,15 @@ class GamepadInput {
   }
 
   void setTrigger(GamepadTrigger trigger, int value) {
-    if (_settings.vibrate && _settings.digitalTriggers) _vibrate();
+    // Digital mode is full-or-nothing — but only while pressed. The release
+    // must go out as triggerMin; forcing it to triggerMax here is what used to
+    // leave the PC holding the trigger down forever.
+    final pressed = value > triggerMin;
+    final sent = _settings.digitalTriggers && pressed ? triggerMax : value;
 
-    _send(
-      TriggerMessage(
-        trigger: trigger,
-        value: _settings.digitalTriggers ? triggerMax : value,
-      ),
-    );
+    if (_settings.vibrate && _settings.digitalTriggers && pressed) _vibrate();
+
+    _send(TriggerMessage(trigger: trigger, value: sent));
   }
 
   void releaseAll() {
@@ -79,7 +80,7 @@ class GamepadInput {
   }
 
   void _vibrate() {
-    Haptics.vibrate(HapticsType.light);
+    unawaited(Haptics.vibrate(HapticsType.success));
   }
 
   void _send(Message message) => unawaited(_transport.send(message));

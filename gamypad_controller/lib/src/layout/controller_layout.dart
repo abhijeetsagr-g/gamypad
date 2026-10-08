@@ -6,6 +6,7 @@ import 'pad_element.dart';
 
 final class ControllerLayout {
   factory ControllerLayout({
+    required String name,
     required Size authoredSize,
     required Map<String, PadElement> elements,
   }) {
@@ -41,14 +42,23 @@ final class ControllerLayout {
       );
     }
 
-    return ControllerLayout._(authoredSize, Map.unmodifiable(ordered));
+    return ControllerLayout._(
+      name: name,
+      authoredSize: authoredSize,
+      elements: Map.unmodifiable(ordered),
+    );
   }
 
-  const ControllerLayout._(this.authoredSize, this.elements);
+  const ControllerLayout._({
+    required this.name,
+    required this.authoredSize,
+    required this.elements,
+  });
 
   static const int currentVersion = 1;
 
   final Size authoredSize;
+  final String name;
   final Map<String, PadElement> elements;
 
   List<PadElement> get ordered => elements.values.toList(growable: false);
@@ -62,11 +72,19 @@ final class ControllerLayout {
     final placed = element.withRect(element.constrain(rect, authoredSize));
     if (placed == element) return this;
 
-    return ControllerLayout._(
-      authoredSize,
-      Map.unmodifiable({...elements, id: placed}),
+    return ControllerLayout(
+      name: name,
+      authoredSize: authoredSize,
+      elements: Map.unmodifiable({...elements, id: placed}),
     );
   }
+
+  /// A copy of this layout stored under [name], for saving it as a preset.
+  ControllerLayout withName(String name) => ControllerLayout._(
+    name: name,
+    authoredSize: authoredSize,
+    elements: elements,
+  );
 
   /// The element whose rect contains [point], or null.
   PadElement? elementAt(Offset point) {
@@ -100,6 +118,7 @@ final class ControllerLayout {
 
   /// Serialises to JSON.
   String encode() => jsonEncode({
+    'name': name,
     'version': currentVersion,
     'authoredWidth': authoredSize.width,
     'authoredHeight': authoredSize.height,
@@ -141,6 +160,11 @@ final class ControllerLayout {
       throw FormatException('Layout "elements" must be a list, got: $entries');
     }
 
+    final Object? name = json['name'];
+    if (name is! String) {
+      throw FormatException('Name must be a string, got: $name');
+    }
+
     final canvas = Size(width, height);
     final decoded = <String, PadElement>{};
 
@@ -168,7 +192,11 @@ final class ControllerLayout {
       decoded[id] = element.withRect(element.constrain(element.rect, canvas));
     }
 
-    return ControllerLayout(authoredSize: canvas, elements: decoded);
+    return ControllerLayout(
+      authoredSize: canvas,
+      elements: decoded,
+      name: name,
+    );
   }
 
   /// Value equality, so a layout edited back to its starting shape compares
@@ -178,6 +206,7 @@ final class ControllerLayout {
       identical(this, other) ||
       other is ControllerLayout &&
           other.authoredSize == authoredSize &&
+          other.name == name &&
           mapEquals(other.elements, elements);
 
   @override

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/utils/app_theme.dart';
 
+/// The primary connect control. Shows a spinner while a connection attempt is
+/// in flight, "RECONNECT" after a dropped link, and stays disabled while
+/// [enabled] is false (e.g. no address entered yet).
 class ConnectButton extends StatelessWidget {
   const ConnectButton({
     super.key,
@@ -14,20 +17,16 @@ class ConnectButton extends StatelessWidget {
   final ConnectionStatus status;
   final bool busy;
   final bool enabled;
-
   final VoidCallback onConnect;
 
   String get _label => switch ((busy, status)) {
     (true, _) => 'CONNECTING',
-    (false, ConnectionStatus.connected) => 'CONNECTED',
     (false, ConnectionStatus.lost) => 'RECONNECT',
     (false, _) => 'CONNECT',
   };
 
   @override
   Widget build(BuildContext context) {
-    final connected = status == ConnectionStatus.connected;
-
     return SizedBox(
       width: double.infinity,
       height: 54,
@@ -35,13 +34,9 @@ class ConnectButton extends StatelessWidget {
         onPressed: busy || !enabled ? null : onConnect,
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorPalette.accent,
-          disabledBackgroundColor: connected
-              ? ColorPalette.dim
-              : ColorPalette.dim,
           foregroundColor: Colors.black,
-          disabledForegroundColor: connected
-              ? ColorPalette.accent
-              : ColorPalette.dim,
+          disabledBackgroundColor: ColorPalette.dim,
+          disabledForegroundColor: ColorPalette.muted,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           elevation: 0,
         ),
@@ -62,6 +57,36 @@ class ConnectButton extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
+      ),
+    );
+  }
+}
+
+/// Opens the on-screen pad. Shown in place of [ConnectButton] while connected.
+class GamepadButton extends StatelessWidget {
+  const GamepadButton({super.key, required this.onPress});
+
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: FilledButton.icon(
+        onPressed: onPress,
+        icon: const Icon(Icons.sports_esports, size: 20),
+        label: const Text('GAMEPAD'),
+        style: FilledButton.styleFrom(
+          backgroundColor: ColorPalette.accent,
+          foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 3,
+            fontSize: 13,
+          ),
+        ),
       ),
     );
   }

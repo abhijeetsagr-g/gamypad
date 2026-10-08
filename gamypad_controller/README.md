@@ -25,9 +25,9 @@ lib/
     │   └── trigger_curve.dart      trigger travel -> 0..255
     ├── layout/
     │   ├── pad_element.dart        one pad element (button/stick/trigger) by id
-    │   ├── controller_layout.dart  data-driven layout: authored size + elements
+    │   ├── controller_layout.dart  data-driven layout: name + authored size + elements
     │   ├── default_layout.dart     the shipped preset
-    │   └── layout_repository.dart  persist layout as one JSON string
+    │   └── layout_repository.dart  persist named layout presets as JSON
     ├── settings/
     │   ├── setting_model.dart      vibrate, digitalTriggers
     │   └── setting_repository.dart persist settings via shared_preferences
@@ -35,8 +35,6 @@ lib/
         ├── state/                  connection/input/layout/setting controllers
         ├── view/                   home, controller, editor, QR scan, settings
         └── widgets/                editor/*, home/*, pad/*, qr/*
-
-docs/                      layout-editor-design.md — the editor's design spec
 ```
 
 ## What the app does
@@ -45,8 +43,8 @@ docs/                      layout-editor-design.md — the editor's design spec
   the address manually. Connection status is displayed live and kept alive with
   pings; a watchdog drops a silent peer after a few seconds.
 - **Controller** — the pad is *data*, not hardcoded widgets: every element is
-  placed from `ControllerLayout`. The **editor** moves/resizes elements and
-  saves the result to local storage; **reset** restores the default.
+  placed from `ControllerLayout`. The **editor** moves/resizes elements and saves
+  the result as a named preset in local storage; **reset** restores the default.
 - **Settings** — optional haptic feedback on button press and a digital-trigger
   mode (triggers become full-press on/off instead of analog).
 

@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart' hide ConnectionState;
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
@@ -10,7 +7,6 @@ import 'package:gamypad_controller/src/ui/state/layout_controller.dart';
 import 'package:gamypad_controller/src/ui/state/setting_controller.dart';
 import 'package:gamypad_controller/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_controller/src/ui/widgets/pad/pad_renderer.dart';
-import 'package:gamypad_controller/src/utils/app_theme.dart';
 
 class ControllerView extends ConsumerStatefulWidget {
   const ControllerView({super.key});
@@ -51,7 +47,6 @@ class _ControllerViewState extends ConsumerState<ControllerView>
     final input = ref.read(inputProvider);
     final layout = ref.watch(layoutControllerProvider).value;
     final settings = ref.watch(settingControllerProvider).value;
-    final vibrate = settings?.vibrate ?? false;
     final digitalTriggers = settings?.digitalTriggers ?? false;
 
     return PopScope(
@@ -59,7 +54,6 @@ class _ControllerViewState extends ConsumerState<ControllerView>
         if (didPop) input.releaseAll();
       },
       child: Scaffold(
-        backgroundColor: ColorPalette.background,
         body: SafeArea(
           child: Stack(
             children: [
@@ -74,9 +68,6 @@ class _ControllerViewState extends ConsumerState<ControllerView>
                           if (!pressed) {
                             input.release(button);
                             return;
-                          }
-                          if (vibrate) {
-                            unawaited(HapticFeedback.vibrate());
                           }
                           input.press(button);
                         },

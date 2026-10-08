@@ -9,29 +9,26 @@ class StickCurve {
   /// Radius, as a fraction of travel, within which the stick reads as centred.
   final double deadzone;
 
-  /// Set below 1.0 to give fine control near centre at the cost of reaching full
-  /// deflection sooner. Above 1.0 does the opposite. 2.0 is quadratic.
   final double gamma;
 
   const StickCurve({this.max = 130.0, this.deadzone = 0.1, this.gamma = 2.0});
 
-  /// Maps a thumb at [dx], [dy] from centre to protocol units.
   ({int x, int y}) apply(double dx, double dy) {
     final distance = math.sqrt(dx * dx + dy * dy);
-    var x = dx;
-    var y = dy;
-    if (distance > max && distance > 0) {
-      final scale = max / distance;
-      x *= scale;
-      y *= scale;
-    }
+    if (distance == 0) return (x: stickCenter, y: stickCenter);
 
-    x /= max;
-    y /= max;
+    // How far through the travel the thumb is, 0..1.
+    final travel = distance < max ? distance / max : 1.0;
+    if (travel < deadzone) return (x: stickCenter, y: stickCenter);
 
-    if (math.sqrt(x * x + y * y) < deadzone) {
-      return (x: stickCenter, y: stickCenter);
-    }
+    final ux = dx / distance;
+    final uy = dy / distance;
+
+    // Unit direction on the circle -> same direction on the square's edge.
+    final edge = math.max(ux.abs(), uy.abs());
+
+    var x = (ux / edge) * travel;
+    var y = (uy / edge) * travel;
 
     x = _shape(x);
     y = _shape(y);

@@ -24,6 +24,7 @@ abstract final class DefaultLayout {
     const lowerRowTop = 254.0;
 
     return ControllerLayout(
+      name: "Default",
       authoredSize: canvasSize,
       elements: {
         'LT': TriggerElement(

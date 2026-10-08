@@ -36,15 +36,17 @@ class _ControllerEditorViewState extends ConsumerState<ControllerEditorView> {
               ),
             )
           : null,
-      body: SizedBox.expand(
-        child: layout == null
-            ? const SizedBox.shrink()
-            : EditorGestures(
-                layout: layout,
-                selected: _selected,
-                onSelectionChanged: (id) => setState(() => _selected = id),
-                onChanged: controller.commit,
-              ),
+      body: SafeArea(
+        child: SizedBox.expand(
+          child: layout == null
+              ? const SizedBox.shrink()
+              : EditorGestures(
+                  layout: layout,
+                  selected: _selected,
+                  onSelectionChanged: (id) => setState(() => _selected = id),
+                  onChanged: controller.commit,
+                ),
+        ),
       ),
     );
   }

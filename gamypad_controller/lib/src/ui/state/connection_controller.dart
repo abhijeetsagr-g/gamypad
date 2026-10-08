@@ -57,7 +57,11 @@ class ConnectionController extends Notifier<ConnectionState> {
     final transport = ref.watch(transportProvider);
 
     final subscription = transport.status.listen((next) {
-      state = state.copyWith(status: next, error: null, busy: false);
+      // Keep the in-flight `busy` flag while a connect attempt is still
+      // running: the transport emits `connecting` before it resolves, and
+      // clearing busy here would hide the spinner and re-enable the button.
+      final busy = next == ConnectionStatus.connecting ? state.busy : false;
+      state = state.copyWith(status: next, error: null, busy: busy);
     });
     ref.onDispose(subscription.cancel);
 
