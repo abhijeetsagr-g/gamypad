@@ -15,18 +15,7 @@ err()   { echo -e "${RED}✗${RESET} $*"; }
 info "🎮 Installing Gamypad"
 
 echo ""
-info "[1/8] Checking dependencies"
-for lib in libgtk-3.so.0 libglib-2.0.so.0; do
-  if ldconfig -p | grep -q "$lib"; then
-    ok "Found $lib"
-  else
-    err "Missing $lib — install gtk3 (e.g. pacman -S gtk3)"
-    exit 1
-  fi
-done
-
-echo ""
-info "[2/8] Creating uinput group"
+info "[1/7] Creating uinput group"
 if getent group uinput >/dev/null 2>&1; then
   ok "uinput group already exists"
 else
@@ -35,12 +24,12 @@ else
 fi
 
 echo ""
-info "[3/8] Adding $USER to uinput and input groups"
+info "[2/7] Adding $USER to uinput and input groups"
 sudo usermod -aG uinput,input "$USER"
 ok "Added $USER to uinput,input"
 
 echo ""
-info "[4/8] Preparing /dev/uinput permissions"
+info "[3/7] Preparing /dev/uinput permissions"
 if [[ -e /dev/uinput ]]; then
   sudo chown root:uinput /dev/uinput
   sudo chmod 0660 /dev/uinput
@@ -51,7 +40,7 @@ else
 fi
 
 echo ""
-info "[5/8] Installing udev, tmpfiles and module autoload"
+info "[4/7] Installing udev, tmpfiles and module autoload"
 echo 'KERNEL=="uinput", SUBSYSTEM=="misc", GROUP="uinput", MODE="0660", TAG+="uaccess"' \
   | sudo tee /etc/udev/rules.d/99-uinput.rules >/dev/null
 ok "Wrote /etc/udev/rules.d/99-uinput.rules"
@@ -64,7 +53,7 @@ echo 'uinput' | sudo tee /etc/modules-load.d/uinput.conf >/dev/null
 ok "Wrote /etc/modules-load.d/uinput.conf"
 
 echo ""
-info "[6/8] Loading uinput module & applying udev"
+info "[5/7] Loading uinput module & applying udev"
 if command -v modinfo >/dev/null 2>&1; then
   modinfo uinput >/dev/null 2>&1 && ok "uinput module is available" || warn "uinput module not found via modinfo"
 fi
@@ -78,7 +67,7 @@ sudo udevadm trigger
 ok "Reloaded udev rules"
 
 echo ""
-info "[7/8] Installing Gamypad to /opt/gamypad"
+info "[6/7] Installing Gamypad to /opt/gamypad"
 if [[ ! -d ./Gamypad ]]; then
   err "./Gamypad/ not found in current directory"
   echo "  Make sure you're inside the extracted Gamypad-*-x86_64 folder."
@@ -91,7 +80,7 @@ sudo ln -sf /opt/gamypad/gamypad_pc /usr/local/bin/gamypad
 ok "Copied to /opt/gamypad and symlinked to /usr/local/bin/gamypad"
 
 echo ""
-info "[8/8] Installing desktop entry"
+info "[7/7] Installing desktop entry"
 if [[ -f ./gamypad.desktop ]]; then
   sudo install -Dm644 ./gamypad.desktop /usr/share/applications/gamypad.desktop
   ok "Installed gamypad.desktop from archive"
