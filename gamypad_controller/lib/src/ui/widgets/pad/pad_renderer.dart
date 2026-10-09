@@ -19,6 +19,7 @@ class PadRenderer extends StatelessWidget {
     this.onTrigger,
     this.enabled = true,
     this.showCanvas = false,
+    this.showHidden = false,
     this.digitalTriggers = false,
   });
 
@@ -30,6 +31,11 @@ class PadRenderer extends StatelessWidget {
 
   final bool enabled;
   final bool showCanvas;
+
+  /// Renders hidden elements as dashed ghosts instead of skipping them. Used by
+  /// the editor so hidden elements stay reachable for re-showing.
+  final bool showHidden;
+
   final bool digitalTriggers;
 
   @override
@@ -51,10 +57,11 @@ class PadRenderer extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             for (final element in layout.ordered)
-              Positioned.fromRect(
-                rect: _scaled(element.rect, scale),
-                child: _widgetFor(element),
-              ),
+              if (!layout.isHidden(element.id) || showHidden)
+                Positioned.fromRect(
+                  rect: _scaled(element.rect, scale),
+                  child: _widgetFor(element),
+                ),
           ],
         );
 
@@ -88,30 +95,109 @@ class PadRenderer extends StatelessWidget {
     rect.height * scale,
   );
 
-  Widget _widgetFor(PadElement element) => switch (element) {
-    ButtonElement(:final button) => PadButton(
-      label: button.name,
-      enabled: enabled,
-      onChanged: onButton == null
-          ? null
-          : (pressed) => onButton!(button, pressed),
-    ),
-    DpadElement() => PadDpad(
-      enabled: enabled,
-      onChanged: onButton == null
-          ? null
-          : (button, pressed) => onButton!(button, pressed),
-    ),
-    StickElement(:final stick) => PadStick(
-      enabled: enabled,
-      onChanged: onStick == null ? null : (x, y) => onStick!(stick, x, y),
-    ),
-    TriggerElement(:final trigger) => PadTrigger(
-      label: trigger.name,
-      digital: digitalTriggers,
-      onChanged: onTrigger == null
-          ? null
-          : (value) => onTrigger!(trigger, value),
-    ),
-  };
+  Widget _widgetFor(PadElement element) {
+    if (layout.isHidden(element.id)) return _HiddenGhost(element: element);
+
+    return switch (element) {
+      ButtonElement(:final button) => PadButton(
+        label: button.name,
+        enabled: enabled,
+        onChanged: onButton == null
+            ? null
+            : (pressed) => onButton!(button, pressed),
+      ),
+      DpadElement() => PadDpad(
+        enabled: enabled,
+        onChanged: onButton == null
+            ? null
+            : (button, pressed) => onButton!(button, pressed),
+      ),
+      StickElement(:final stick) => PadStick(
+        enabled: enabled,
+        onChanged: onStick == null ? null : (x, y) => onStick!(stick, x, y),
+      ),
+      TriggerElement(:final trigger) => PadTrigger(
+        label: trigger.name,
+        digital: digitalTriggers,
+        onChanged: onTrigger == null
+            ? null
+            : (value) => onTrigger!(trigger, value),
+      ),
+    };
+  }
+}
+
+/// The dashed, dimmed stand-in for a hidden element while editing, so the
+/// element stays reachable for re-showing.
+class _HiddenGhost extends StatelessWidget {
+  const _HiddenGhost({required this.element});
+
+  final PadElement element;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: const _GhostPainter(),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              element.id,
+              style: const TextStyle(
+                color: ColorPalette.muted,
+                fontSize: 11,
+                letterSpacing: 1,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GhostPainter extends CustomPainter {
+  const _GhostPainter();
+
+  static const _dash = 7.0;
+  static const _gap = 6.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(8),
+    );
+
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..color = ColorPalette.dim
+        ..style = PaintingStyle.fill,
+    );
+
+    final border = Paint()
+      ..color = ColorPalette.muted
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    for (final metric in (Path()..addRRect(rrect.deflate(1)))
+        .computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final length = math.min(_dash, metric.length - distance);
+        canvas.drawPath(
+          metric.extractPath(distance, distance + length),
+          border,
+        );
+        distance += _dash + _gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GhostPainter oldDelegate) => false;
 }

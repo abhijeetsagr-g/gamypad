@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
+import 'package:gamypad_controller/src/layout/default_layout.dart';
 import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
+import 'package:gamypad_controller/src/ui/state/layout_controller.dart';
+import 'package:gamypad_controller/src/ui/view/controller_editor_view.dart';
 import 'package:gamypad_controller/src/ui/view/controller_view.dart';
 import 'package:gamypad_controller/src/ui/view/qr_scan_view.dart';
 import 'package:gamypad_controller/src/ui/view/setting_view.dart';
@@ -61,7 +64,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
     FocusScope.of(context).unfocus();
   }
 
-  /// Why the pair was refused, in terms of what the fields hold.
   String _invalidPairMessage() {
     if (_host.text.trim().isEmpty && _port.text.trim().isEmpty) {
       return 'Enter an address and port, or scan the QR code on your PC.';
@@ -74,13 +76,27 @@ class _HomeViewState extends ConsumerState<HomeView> {
   Future<void> _disconnect() =>
       ref.read(connectionControllerProvider.notifier).disconnect();
 
-  /// Retries the remembered server after a dropped link.
   Future<void> _reconnect() =>
       ref.read(connectionControllerProvider.notifier).reconnect();
 
   Future<void> _play() => Navigator.of(
     context,
   ).push<void>(MaterialPageRoute(builder: (_) => const ControllerView()));
+
+  Future<void> _editLayout() async {
+    final controller = ref.read(layoutControllerProvider.notifier);
+    final active = ref.read(layoutControllerProvider).value;
+    // The built-in default is never edited in place: editing it starts a fresh
+    // "New Layout" draft instead.
+    final isNew =
+        active == null || active.name == DefaultLayout.layout.name;
+    if (isNew) await controller.startNew();
+    if (!mounted) return;
+
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => ControllerEditorView(isNew: isNew)),
+    );
+  }
 
   Future<void> _settings() => Navigator.of(
     context,
@@ -179,6 +195,19 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       child: const Text('DISCONNECT'),
                     ),
                   ],
+                  TextButton.icon(
+                    onPressed: _editLayout,
+                    icon: const Icon(Icons.tune, size: 18),
+                    label: const Text('EDIT CURRENT LAYOUT'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: ColorPalette.muted,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

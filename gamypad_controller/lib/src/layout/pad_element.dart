@@ -210,34 +210,35 @@ final class StickElement extends PadElement {
   String toString() => 'StickElement($stick, $rect)';
 }
 
-/// An analog trigger: slide up for more travel.
+/// An analog trigger: slide up for more travel. How tall it is on the canvas
+/// sets the travel range, so a taller trigger gives a finer analog sweep.
 final class TriggerElement extends PadElement {
   const TriggerElement({required this.trigger, required Rect rect})
     : super(rect);
 
   final GamepadTrigger trigger;
 
-  /// The size is a constant, not a stored value, so travel is the same on every
-  /// layout the user has ever had.
-  static const double fixedWidth = 132;
-  static const double fixedHeight = 48;
-  static const Size fixedSize = Size(fixedWidth, fixedHeight);
+  /// The trigger's default size in a freshly built layout. Actual sizes come
+  /// from the stored rect like any other element.
+  static const double defaultWidth = 132;
+  static const double defaultHeight = 48;
+  static const Size defaultSize = Size(defaultWidth, defaultHeight);
 
   @override
   String get id => trigger.name;
 
   @override
-  bool get resizable => false;
-
-  /// Height is the dimension travel comes from, so it is the one quoted here.
-  @override
-  MinMax get minSize => const MinMax.exact(fixedHeight);
+  bool get resizable => true;
 
   @override
-  MinMax get maxSize => minSize;
+  MinMax get minSize => const MinMax(48);
 
   @override
-  Size resolveSize(double width, double height) => fixedSize;
+  MinMax get maxSize => MinMax.unbounded;
+
+  @override
+  Size resolveSize(double width, double height) =>
+      Size(fit(width), fit(height));
 
   @override
   PadElement withRect(Rect rect) =>

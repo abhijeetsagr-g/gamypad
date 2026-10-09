@@ -14,7 +14,7 @@ abstract final class DefaultLayout {
         Rect.fromLTWH(x, y, w, h);
 
     const topBarY = 18.0;
-    const triggerHeight = TriggerElement.fixedHeight;
+    const triggerHeight = TriggerElement.defaultHeight;
     const shoulderHeight = 44.0;
     final shoulderTop = topBarY + (triggerHeight - shoulderHeight) / 2;
 
@@ -29,7 +29,7 @@ abstract final class DefaultLayout {
       elements: {
         'LT': TriggerElement(
           trigger: GamepadTrigger.LT,
-          rect: at(26, topBarY, TriggerElement.fixedWidth, triggerHeight),
+          rect: at(26, topBarY, TriggerElement.defaultWidth, triggerHeight),
         ),
         'LB': ButtonElement(
           button: GamepadButton.LB,
@@ -45,7 +45,7 @@ abstract final class DefaultLayout {
         ),
         'RT': TriggerElement(
           trigger: GamepadTrigger.RT,
-          rect: at(642, topBarY, TriggerElement.fixedWidth, triggerHeight),
+          rect: at(642, topBarY, TriggerElement.defaultWidth, triggerHeight),
         ),
 
         'dpad': DpadElement(rect: at(46, lowerRowTop, stickSide, stickSide)),

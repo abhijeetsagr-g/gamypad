@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/settings/setting_model.dart';
 import 'package:gamypad_controller/src/ui/state/setting_controller.dart';
+import 'package:gamypad_controller/src/ui/widgets/setting/layout_section.dart';
 import 'package:gamypad_controller/src/ui/widgets/setting/section_label.dart';
 import 'package:gamypad_controller/src/utils/app_theme.dart';
 
@@ -70,6 +71,8 @@ class _Body extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
           children: [
+            const LayoutSection(),
+            const SizedBox(height: 24),
             SwitchRow(
               label: "FEEDBACK",
               title: "Vibration",

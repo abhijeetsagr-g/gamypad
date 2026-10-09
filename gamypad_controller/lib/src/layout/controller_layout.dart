@@ -9,6 +9,7 @@ final class ControllerLayout {
     required String name,
     required Size authoredSize,
     required Map<String, PadElement> elements,
+    Set<String> hidden = const {},
   }) {
     if (authoredSize.width <= 0 || authoredSize.height <= 0) {
       throw ArgumentError.value(
@@ -42,10 +43,18 @@ final class ControllerLayout {
       );
     }
 
+    final known = PadElement.ids.toSet();
+    for (final id in hidden) {
+      if (!known.contains(id)) {
+        throw ArgumentError.value(id, 'hidden', 'no such pad element');
+      }
+    }
+
     return ControllerLayout._(
       name: name,
       authoredSize: authoredSize,
       elements: Map.unmodifiable(ordered),
+      hidden: Set.unmodifiable(hidden),
     );
   }
 
@@ -53,16 +62,42 @@ final class ControllerLayout {
     required this.name,
     required this.authoredSize,
     required this.elements,
+    required this.hidden,
   });
 
-  static const int currentVersion = 1;
+  /// Older layouts were saved without the "hidden" set; treating them as
+  /// having nothing hidden keeps them loadable after an upgrade.
+  static const int firstHiddenVersion = 2;
+
+  static const int currentVersion = 2;
 
   final Size authoredSize;
   final String name;
   final Map<String, PadElement> elements;
 
+  /// Element ids the user has hidden: not rendered and not touchable, and they
+  /// don't block other elements or fail validity checks.
+  final Set<String> hidden;
+
   List<PadElement> get ordered => elements.values.toList(growable: false);
+
+  /// Everything that should render, i.e. the element ids not in [hidden].
+  List<PadElement> get visible => [
+    for (final element in ordered)
+      if (!hidden.contains(element.id)) element,
+  ];
+
+  bool isHidden(String id) => hidden.contains(id);
+
   PadElement? operator [](String id) => elements[id];
+
+  /// A copy of this layout with the hidden set replaced by [hidden].
+  ControllerLayout withHidden(Set<String> hidden) => ControllerLayout(
+    name: name,
+    authoredSize: authoredSize,
+    elements: elements,
+    hidden: hidden,
+  );
 
   ControllerLayout place(String id, Rect rect) {
     final element = elements[id];
@@ -76,6 +111,7 @@ final class ControllerLayout {
       name: name,
       authoredSize: authoredSize,
       elements: Map.unmodifiable({...elements, id: placed}),
+      hidden: hidden,
     );
   }
 
@@ -84,6 +120,7 @@ final class ControllerLayout {
     name: name,
     authoredSize: authoredSize,
     elements: elements,
+    hidden: hidden,
   );
 
   /// The element whose rect contains [point], or null.
@@ -94,10 +131,12 @@ final class ControllerLayout {
     return null;
   }
 
-  bool collides(Rect rect, {String? except}) =>
-      elements.values.any((e) => e.id != except && e.rect.overlaps(rect));
+  bool collides(Rect rect, {String? except}) => visible.any(
+    (e) => e.id != except && e.rect.overlaps(rect),
+  );
 
-  bool get isWithinCanvas => elements.values.every((e) => _contains(e.rect));
+  bool get isWithinCanvas =>
+      visible.every((e) => _contains(e.rect));
 
   bool _contains(Rect rect) =>
       rect.left >= 0 &&
@@ -109,7 +148,7 @@ final class ControllerLayout {
     if (!isWithinCanvas) return false;
 
     final seen = <Rect>[];
-    for (final element in elements.values) {
+    for (final element in visible) {
       if (seen.any((other) => other.overlaps(element.rect))) return false;
       seen.add(element.rect);
     }
@@ -122,6 +161,7 @@ final class ControllerLayout {
     'version': currentVersion,
     'authoredWidth': authoredSize.width,
     'authoredHeight': authoredSize.height,
+    'hidden': (hidden.toList()..sort()),
     'elements': [for (final id in PadElement.ids) _encoded(elements[id]!)],
   });
 
@@ -140,9 +180,9 @@ final class ControllerLayout {
     }
 
     final version = json['version'];
-    if (version != currentVersion) {
+    if (version != 1 && version != currentVersion) {
       throw FormatException(
-        'Unsupported layout version: $version (this build reads '
+        'Unsupported layout version: $version (this build reads 1 or '
         '$currentVersion)',
       );
     }
@@ -163,6 +203,25 @@ final class ControllerLayout {
     final Object? name = json['name'];
     if (name is! String) {
       throw FormatException('Name must be a string, got: $name');
+    }
+
+    final hidden = <String>[];
+    if (version >= firstHiddenVersion) {
+      final rawHidden = json['hidden'];
+      if (rawHidden != null) {
+        if (rawHidden is! List) {
+          throw FormatException('Layout "hidden" must be a list, got: $rawHidden');
+        }
+        for (final id in rawHidden) {
+          if (id is! String) {
+            throw FormatException('Hidden id must be a string, got: $id');
+          }
+          if (!PadElement.ids.contains(id)) {
+            throw FormatException('Unknown hidden element "$id"');
+          }
+          if (!hidden.contains(id)) hidden.add(id);
+        }
+      }
     }
 
     final canvas = Size(width, height);
@@ -196,6 +255,7 @@ final class ControllerLayout {
       authoredSize: canvas,
       elements: decoded,
       name: name,
+      hidden: Set.unmodifiable(hidden),
     );
   }
 
@@ -207,16 +267,21 @@ final class ControllerLayout {
       other is ControllerLayout &&
           other.authoredSize == authoredSize &&
           other.name == name &&
-          mapEquals(other.elements, elements);
+          mapEquals(other.elements, elements) &&
+          setEquals(other.hidden, hidden);
 
   @override
-  int get hashCode =>
-      Object.hash(authoredSize, Object.hashAllUnordered(elements.values));
+  int get hashCode => Object.hash(
+    authoredSize,
+    Object.hashAllUnordered(elements.values),
+    Object.hashAllUnordered(hidden),
+  );
 
   @override
   String toString() =>
       'ControllerLayout(${authoredSize.width.toInt()}×'
       '${authoredSize.height.toInt()}, ${elements.length} elements'
+      '${hidden.isEmpty ? '' : ', ${hidden.length} hidden'}'
       '${isValid ? '' : ', INVALID'})';
 }
 

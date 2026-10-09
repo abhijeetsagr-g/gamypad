@@ -12,12 +12,16 @@ class EditorGestures extends StatefulWidget {
     required this.selected,
     required this.onChanged,
     required this.onSelectionChanged,
+    this.onToggleHidden,
   });
 
   final ControllerLayout layout;
   final String? selected;
   final ValueChanged<ControllerLayout> onChanged;
   final ValueChanged<String?> onSelectionChanged;
+
+  /// Fired when the selected element's top-right hide/show icon is tapped.
+  final VoidCallback? onToggleHidden;
 
   @override
   State<EditorGestures> createState() => _EditorGesturesState();
@@ -75,6 +79,19 @@ class _EditorGesturesState extends State<EditorGestures> {
         _dragStart = current.rect;
         _dragOrigin = position;
         _preview = widget.layout;
+      });
+      return;
+    }
+
+    if (current != null &&
+        SelectionOverlay.hideRectFor(
+          current,
+          _scale,
+        ).inflate(8).contains(position)) {
+      widget.onToggleHidden?.call();
+      setState(() {
+        _mode = _DragMode.none;
+        _dragId = null;
       });
       return;
     }
@@ -165,12 +182,17 @@ class _EditorGesturesState extends State<EditorGestures> {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  PadRenderer(layout: _shown, showCanvas: true),
+                  PadRenderer(
+                    layout: _shown,
+                    showCanvas: true,
+                    showHidden: true,
+                  ),
                   IgnorePointer(
                     child: SelectionOverlay(
                       element: selected == null ? null : _shown[selected],
                       scale: _scale,
                       invalid: _invalid,
+                      hidden: selected != null && _shown.isHidden(selected),
                       showHandle:
                           selected != null && _shown[selected]!.resizable,
                     ),
