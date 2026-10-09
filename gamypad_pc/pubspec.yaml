@@ -4,7 +4,7 @@ publish_to: "none"
 
 # Keep in sync with ../gamypad_controller/pubspec.yaml — the two halves must
 # ship matching versions because they share a wire protocol.
-version: 1.2.0+1
+version: 1.3.0+1
 
 environment:
   sdk: ^3.13.4
