@@ -1,40 +1,70 @@
-#!/bin/bash
-# Assembles the distributable Gamypad-x86_64.zip.
-#
-# This replaces the old approach of committing a prebuilt `Gamypad/` bundle to
-# the repository (which was ~50MB of dead weight in git history). The bundle is
-# now a build product: it is generated here and uploaded to GitHub Releases.
+#!/usr/bin/env bash
+# Assembles Gamypad-<version>-x86_64.zip for distribution.
+# Extracting the zip creates a single top-level directory containing everything.
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-BUNDLE="$ROOT/dist/Gamypad"
+DIST="$ROOT/dist"
+BUNDLE_SRC="$ROOT/build/linux/x64/release/bundle"
+
+# Extract version from pubspec.yaml (e.g. 1.3.0+1 -> 1.3.0)
 VERSION="$(grep -m1 '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)"
-ZIP="$ROOT/dist/Gamypad-x86_64.zip"
+NAME="Gamypad-${VERSION}-x86_64"
+STAGE="$DIST/$NAME"
+ZIP="$DIST/${NAME}.zip"
 
 echo "==> Building Flutter Linux release (v$VERSION)"
 flutter build linux --release
 
-echo "==> Copying bundle to dist/Gamypad"
-rm -rf "$BUNDLE"
-cp -r "$ROOT/build/linux/x64/release/bundle" "$BUNDLE"
+echo "==> Preparing staging directory: $NAME"
+rm -rf "$STAGE" "$ZIP"
+mkdir -p "$STAGE"
 
-# Ship only what the user needs. Anything missing here breaks install.sh.
-for required in gamypad_pc lib/libapp.so lib/libflutter_linux_gtk.so lib/libgamepad.so \
-                data/flutter_assets/assets/icon.png; do
-  if [[ ! -e "$BUNDLE/$required" ]]; then
-    echo "!! Missing from bundle: $required" >&2
-    echo "   (check that assets/icon.png is declared in pubspec.yaml)" >&2
+echo "==> Copying release bundle to $NAME/Gamypad"
+cp -r "$BUNDLE_SRC" "$STAGE/Gamypad"
+
+echo "==> Validating required files"
+REQUIRED=(
+  "Gamypad/gamypad_pc"
+  "Gamypad/lib/libapp.so"
+  "Gamypad/lib/libflutter_linux_gtk.so"
+  "Gamypad/lib/libgamepad.so"
+  "Gamypad/data/flutter_assets/assets/icon.png"
+)
+for req in "${REQUIRED[@]}"; do
+  if [[ ! -e "$STAGE/$req" ]]; then
+    echo "!! Missing: $req" >&2
+    echo "   Check pubspec.yaml assets include assets/icon.png" >&2
     exit 1
   fi
 done
 
-echo "==> Zipping"
+echo "==> Generating .desktop entry"
+cat > "$STAGE/gamypad.desktop" <<'EOF'
+[Desktop Entry]
+Name=Gamypad
+Comment=Use your smartphone as a wireless gamepad on Linux
+Exec=/opt/gamypad/gamypad_pc
+Icon=/opt/gamypad/data/flutter_assets/assets/icon.png
+Type=Application
+Categories=Game;Utility;
+Terminal=false
+EOF
+
+echo "==> Copying install/uninstall scripts"
+cp "$DIST/install.sh" "$STAGE/install.sh"
+cp "$DIST/uninstall.sh" "$STAGE/uninstall.sh"
+chmod +x "$STAGE/install.sh" "$STAGE/uninstall.sh"
+
+echo "==> Creating archive: $(basename "$ZIP")"
 rm -f "$ZIP"
-(cd "$ROOT/dist" && zip -qr "$(basename "$ZIP")" Gamypad install.sh uninstall.sh)
+(cd "$DIST" && zip -qr "$(basename "$ZIP")" "$NAME")
 
 echo ""
 echo "✓ $ZIP"
 ls -lh "$ZIP"
 echo ""
-echo "Next: upload it to the GitHub Release for tag v$VERSION alongside the APK."
+echo "Extract with: unzip $(basename "$ZIP")"
+echo "Then run:   cd $NAME && ./install.sh"
