@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_pc/src/ui/state/notifier.dart';
 import 'package:gamypad_pc/src/ui/view/log_view.dart';
+import 'package:gamypad_pc/src/ui/view/settings_view.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/connection_status_badge.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/error_banner.dart';
 import 'package:gamypad_pc/src/ui/widgets/home/pairing_panel.dart';
@@ -31,6 +32,16 @@ class HomeView extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: ConnectionStatusBadge(connection: server.connection),
+          ),
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsView()),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),

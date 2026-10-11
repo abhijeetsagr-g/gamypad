@@ -20,7 +20,7 @@ class GamepadSession {
   Stream<ConnectionState> get state => socket.state;
   int get port => socket.port;
 
-  Future<void> start() async {
+  Future<void> start({int port = 0}) async {
     _trace('start() called');
     _subscription = socket.messages.listen(
       apply,
@@ -31,11 +31,14 @@ class GamepadSession {
     );
     _trace('subscribed to ${socket.runtimeType}.messages');
     try {
-      await socket.start();
+      await socket.start(port: port);
       _trace('socket.start() returned, port=${socket.port}');
     } catch (e, st) {
       _trace('socket.start() THREW ${e.runtimeType}: $e');
       _trace('stack: $st');
+      // Leave nothing subscribed, or a retry would apply every message twice.
+      await _subscription?.cancel();
+      _subscription = null;
       rethrow;
     }
   }
