@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_pc/src/ui/state/providers.dart';
 import 'package:protocol/protocol.dart';
 
-enum LogFilter { all, buttons, stick, trigger }
+/// [motion] is opt-in: raw sensor samples arrive ~50 times a second, so they
+/// are only recorded while it is the selected filter, and never appear under
+/// [all].
+enum LogFilter { all, buttons, stick, trigger, motion }
 
 class LogEntry {
   final DateTime time;
@@ -24,13 +27,15 @@ class LogState {
 
   List<LogEntry> get filteredEntries {
     return switch (filter) {
-      LogFilter.all => entries,
+      LogFilter.all => entries.where((e) => e.message is! MotionMessage).toList(),
       LogFilter.buttons =>
         entries.where((e) => e.message is ButtonMessage).toList(),
       LogFilter.stick =>
         entries.where((e) => e.message is StickMessage).toList(),
       LogFilter.trigger =>
         entries.where((e) => e.message is TriggerMessage).toList(),
+      LogFilter.motion =>
+        entries.where((e) => e.message is MotionMessage).toList(),
     };
   }
 
@@ -68,9 +73,11 @@ class LogController extends Notifier<LogState> {
   }
 
   void _append(Message message) {
-    // Watchdog traffic isn't user input, and motion samples (~50/s) would
-    // push every real input out of the log.
-    if (message is Ping || message is Pong || message is MotionMessage) return;
+    // Watchdog traffic isn't user input.
+    if (message is Ping || message is Pong) return;
+    // Motion samples (~50/s) would push every real input out of the log, so
+    // they are only recorded while the motion filter is selected.
+    if (message is MotionMessage && state.filter != LogFilter.motion) return;
 
     final entries = [...state.entries];
     final now = DateTime.now();
@@ -93,6 +100,7 @@ class LogController extends Notifier<LogState> {
     (TriggerMessage(trigger: final t1), TriggerMessage(trigger: final t2)) =>
       t1 == t2,
     (StickMessage(stick: final s1), StickMessage(stick: final s2)) => s1 == s2,
+    (MotionMessage(), MotionMessage()) => true,
     _ => false,
   };
 }

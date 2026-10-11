@@ -20,6 +20,38 @@ const gyroModeDescriptions = <GyroMode, String>{
       'device will respond, and sticks are not affected. Experimental.',
 };
 
+/// Extra switches that only make sense for some modes.
+enum GyroOption { invertY, holdPosition, sixAxis }
+
+const gyroOptionsFor = <GyroMode, List<GyroOption>>{
+  GyroMode.aim: [
+    GyroOption.invertY,
+    GyroOption.holdPosition,
+    GyroOption.sixAxis,
+  ],
+  GyroMode.tilt: [GyroOption.sixAxis],
+  GyroMode.motionDevice: [],
+};
+
+const _optionText = <GyroOption, ({String title, String subtitle})>{
+  GyroOption.invertY: (
+    title: 'Invert vertical axis',
+    subtitle: 'Raising the far edge of the phone looks down',
+  ),
+  GyroOption.holdPosition: (
+    title: 'Hold position',
+    subtitle:
+        'The stick stays where you turned it instead of returning to centre. '
+        'Turn back to return it, or touch the stick to recentre',
+  ),
+  GyroOption.sixAxis: (
+    title: '6-axis fusion',
+    subtitle:
+        'Combine gyro and accelerometer to track which way is up. Aim keeps '
+        'working when the phone is rolled or tipped, and tilt is steadier',
+  ),
+};
+
 const _gyroModeLabels = <GyroMode, String>{
   GyroMode.aim: 'AIM',
   GyroMode.tilt: 'TILT',
@@ -33,11 +65,27 @@ class GyroSection extends StatelessWidget {
     required this.model,
     required this.onEnabledChanged,
     required this.onModeChanged,
+    required this.onChanged,
   });
 
   final SettingModel model;
   final ValueChanged<bool> onEnabledChanged;
   final ValueChanged<GyroMode> onModeChanged;
+
+  /// Reports the whole model with one option flipped.
+  final ValueChanged<SettingModel> onChanged;
+
+  bool _valueOf(GyroOption option) => switch (option) {
+    GyroOption.invertY => model.gyroInvertY,
+    GyroOption.holdPosition => model.gyroHold,
+    GyroOption.sixAxis => model.gyroSixAxis,
+  };
+
+  SettingModel _with(GyroOption option, bool value) => switch (option) {
+    GyroOption.invertY => model.copyWith(gyroInvertY: value),
+    GyroOption.holdPosition => model.copyWith(gyroHold: value),
+    GyroOption.sixAxis => model.copyWith(gyroSixAxis: value),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +134,66 @@ class GyroSection extends StatelessWidget {
               height: 1.4,
             ),
           ),
+          for (final option in gyroOptionsFor[model.gyroMode]!) ...[
+            const SizedBox(height: 12),
+            _OptionTile(
+              key: ValueKey('gyro-option-${option.name}'),
+              title: _optionText[option]!.title,
+              subtitle: _optionText[option]!.subtitle,
+              value: _valueOf(option),
+              onChanged: (value) => onChanged(_with(option, value)),
+            ),
+          ],
         ],
       ],
+    );
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  const _OptionTile({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: ColorPalette.analogTrack,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ColorPalette.border),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: SwitchListTile(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: Colors.black,
+          activeTrackColor: ColorPalette.accent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: ColorPalette.text,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(color: ColorPalette.muted, fontSize: 12),
+          ),
+        ),
+      ),
     );
   }
 }

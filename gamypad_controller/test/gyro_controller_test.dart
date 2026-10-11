@@ -165,4 +165,113 @@ void main() {
     sensors.gyro.add(const Vec3(1, 1, 1));
     expect(transport.sent.length, before);
   });
+
+  group('options', () {
+    // Phone level in landscape: controller y is up. A device-x rotation of -1
+    // rad/s is the controller turning right at ~57 deg/s.
+    const turnRight = Vec3(-1, 0, 0);
+    const still = Vec3(0, 0, 0);
+
+    var now = Duration.zero;
+    Duration clock() => now;
+
+    GyroController build(GyroOptions options, {GyroMode mode = GyroMode.aim}) {
+      now = Duration.zero;
+      return GyroController(
+        sensors: sensors,
+        input: input,
+        mode: mode,
+        options: options,
+        clock: clock,
+      )..start();
+    }
+
+    void feed(Vec3 gyro, int events) {
+      for (var i = 0; i < events; i++) {
+        now += const Duration(milliseconds: 20);
+        sensors.gyro.add(gyro);
+      }
+    }
+
+    test('default: the stick returns to centre when turning stops', () {
+      build(const GyroOptions());
+      sensors.accel.add(_level);
+      feed(turnRight, 10);
+      expect(sticks().last.x, greaterThan(0));
+      feed(still, 1);
+      expect(sticks().last.x, 0);
+    });
+
+    test('hold: the stick keeps its deflection when turning stops', () {
+      build(const GyroOptions(holdPosition: true));
+      sensors.accel.add(_level);
+      feed(turnRight, 11); // first event has no elapsed time
+      final held = sticks().last.x;
+      expect(held, greaterThan(10000));
+
+      feed(still, 50);
+      expect(sticks().last.x, held); // never sent a return to centre
+      expect(sticks().where((s) => s.x == 0), isEmpty);
+    });
+
+    test('hold: touching the stick recentres it', () {
+      build(const GyroOptions(holdPosition: true));
+      sensors.accel.add(_level);
+      feed(turnRight, 11);
+
+      input.setStick(GamepadStick.rightStick, 15000, 0); // finger down
+      feed(still, 1); // controller notices and resets
+      input.setStick(GamepadStick.rightStick, 0, 0); // finger up
+      feed(still, 5);
+
+      expect(sticks().last.x, 0);
+    });
+
+    // Device y rotation is controller pitch: +1 raises the far edge (look up).
+    const pitchUp = Vec3(0, 1, 0);
+
+    test('raising the far edge looks up by default (stick y negative)', () {
+      build(const GyroOptions());
+      sensors.accel.add(_level);
+      feed(pitchUp, 3);
+      expect(sticks().last.y, lessThan(0));
+    });
+
+    test('invertY: the same movement looks down (stick y positive)', () {
+      build(const GyroOptions(invertY: true));
+      sensors.accel.add(_level);
+      feed(pitchUp, 3);
+      expect(sticks().last.y, greaterThan(0));
+      expect(sticks().last.x, 0); // horizontal untouched
+    });
+
+    test('6-axis: spinning a flat phone aims; without it, it does not', () {
+      // Lying on a table screen-up: gravity on device z.
+      const flat = Vec3(0, 0, 9.8);
+      const spinRight = Vec3(0, 0, -1);
+
+      build(const GyroOptions(sixAxis: false));
+      sensors.accel.add(flat);
+      feed(spinRight, 5);
+      expect(sticks(), isEmpty);
+    });
+
+    test('6-axis on: the same spin turns the camera right', () {
+      const flat = Vec3(0, 0, 9.8);
+      const spinRight = Vec3(0, 0, -1);
+
+      build(const GyroOptions());
+      sensors.accel.add(flat);
+      feed(spinRight, 5);
+      expect(sticks().last.x, greaterThan(0));
+    });
+
+    test('tilt with 6-axis still steers', () {
+      build(const GyroOptions(), mode: GyroMode.tilt);
+      // About 30 degrees of wheel.
+      sensors.accel.add(const Vec3(8.5, -4.9, 0));
+      expect(sticks().last.stick, GamepadStick.leftStick);
+      expect(sticks().last.x, isNot(0));
+    });
+  });
 }

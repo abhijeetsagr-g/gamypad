@@ -30,11 +30,23 @@ LogParts describe(Message message) => switch (message) {
     'x: $x  y: $y',
     valueColor: ColorPalette.accent,
   ),
-  MotionMessage(:final gx, :final gy, :final gz) => LogParts(
-    'motion',
-    'gyro: $gx $gy $gz',
-    valueColor: ColorPalette.muted,
-  ),
+  MotionMessage(
+    :final gx,
+    :final gy,
+    :final gz,
+    :final ax,
+    :final ay,
+    :final az,
+  ) =>
+    LogParts(
+      'motion',
+      // Raw wire values: gyro in millidegrees/s, accelerometer in milli-g.
+      'gyro  x:${_pad(gx)} y:${_pad(gy)} z:${_pad(gz)}   '
+      'accel x:${_pad(ax)} y:${_pad(ay)} z:${_pad(az)}',
+      valueColor: ColorPalette.accent,
+    ),
   Ping() => const LogParts('PING', '', valueColor: ColorPalette.muted),
   Pong() => const LogParts('PONG', '', valueColor: ColorPalette.muted),
 };
+
+String _pad(int v) => v.toString().padLeft(8);

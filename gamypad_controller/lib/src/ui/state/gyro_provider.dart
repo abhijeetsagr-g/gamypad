@@ -24,6 +24,7 @@ final gyroControllerProvider = Provider.autoDispose<GyroController?>((ref) {
     sensors: ref.watch(motionSensorsProvider),
     input: ref.watch(inputProvider),
     mode: settings.gyroMode,
+    options: GyroOptions.from(settings),
   )..start();
   ref.onDispose(controller.stop);
   return controller;

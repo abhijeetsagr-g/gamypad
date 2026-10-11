@@ -52,6 +52,8 @@ class SettingView extends ConsumerWidget {
             onGyroModeChanged: (value) => ref
                 .read(settingControllerProvider.notifier)
                 .commit(model.copyWith(gyroMode: value)),
+            onChanged: (next) =>
+                ref.read(settingControllerProvider.notifier).commit(next),
           ),
         ),
       ),
@@ -66,6 +68,7 @@ class _Body extends StatelessWidget {
     required this.onDigitalTriggersChanged,
     required this.onGyroEnabledChanged,
     required this.onGyroModeChanged,
+    required this.onChanged,
   });
 
   final SettingModel model;
@@ -73,6 +76,7 @@ class _Body extends StatelessWidget {
   final ValueChanged<bool> onDigitalTriggersChanged;
   final ValueChanged<bool> onGyroEnabledChanged;
   final ValueChanged<GyroMode> onGyroModeChanged;
+  final ValueChanged<SettingModel> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +108,7 @@ class _Body extends StatelessWidget {
               model: model,
               onEnabledChanged: onGyroEnabledChanged,
               onModeChanged: onGyroModeChanged,
+              onChanged: onChanged,
             ),
           ],
         ),

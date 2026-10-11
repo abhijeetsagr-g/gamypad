@@ -63,6 +63,9 @@ class GamepadInput {
     _send(StickMessage(stick: stick, x: x, y: y));
   }
 
+  /// Whether a finger is currently deflecting [stick].
+  bool isTouched(GamepadStick stick) => _touched.contains(stick);
+
   /// Hands a stick back to centre when motion control stops.
   void releaseMotionStick(GamepadStick stick) {
     if (_motionSent.remove(stick) == null || _touched.contains(stick)) return;

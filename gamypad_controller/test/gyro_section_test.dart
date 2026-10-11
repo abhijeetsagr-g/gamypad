@@ -7,6 +7,7 @@ Widget _host(
   SettingModel model, {
   ValueChanged<bool>? onEnabled,
   ValueChanged<GyroMode>? onMode,
+  ValueChanged<SettingModel>? onChanged,
 }) => MaterialApp(
   home: Scaffold(
     body: SingleChildScrollView(
@@ -14,6 +15,7 @@ Widget _host(
         model: model,
         onEnabledChanged: onEnabled ?? (_) {},
         onModeChanged: onMode ?? (_) {},
+        onChanged: onChanged ?? (_) {},
       ),
     ),
   ),
@@ -88,7 +90,72 @@ void main() {
     await tester.tap(find.text('TILT'));
     expect(picked, GyroMode.tilt);
 
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byType(Switch).first); // the gyro toggle
     expect(enabled, isFalse);
+  });
+
+  testWidgets('each mode shows only its own options', (tester) async {
+    Future<List<String>> shown(GyroMode mode) async {
+      await tester.pumpWidget(
+        _host(SettingModel(gyroEnabled: true, gyroMode: mode)),
+      );
+      return [
+        for (final o in GyroOption.values)
+          if (find
+              .byKey(ValueKey('gyro-option-${o.name}'))
+              .evaluate()
+              .isNotEmpty)
+            o.name,
+      ];
+    }
+
+    expect(await shown(GyroMode.aim), ['invertY', 'holdPosition', 'sixAxis']);
+    expect(await shown(GyroMode.tilt), ['sixAxis']);
+    expect(await shown(GyroMode.motionDevice), isEmpty);
+  });
+
+  testWidgets('options start as invert off, hold off, 6-axis on', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host(const SettingModel(gyroEnabled: true)));
+    bool on(GyroOption o) => tester
+        .widget<SwitchListTile>(
+          find.descendant(
+            of: find.byKey(ValueKey('gyro-option-${o.name}')),
+            matching: find.byType(SwitchListTile),
+          ),
+        )
+        .value;
+
+    expect(on(GyroOption.invertY), isFalse);
+    expect(on(GyroOption.holdPosition), isFalse);
+    expect(on(GyroOption.sixAxis), isTrue);
+  });
+
+  testWidgets('flipping an option reports the updated model', (tester) async {
+    SettingModel? next;
+    await tester.pumpWidget(
+      _host(const SettingModel(gyroEnabled: true), onChanged: (m) => next = m),
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('gyro-option-invertY')),
+        matching: find.byType(Switch),
+      ),
+    );
+    expect(next!.gyroInvertY, isTrue);
+    expect(next!.gyroHold, isFalse);
+    expect(next!.gyroEnabled, isTrue);
+  });
+
+  test('the new options survive a save and load', () {
+    const model = SettingModel(
+      gyroEnabled: true,
+      gyroInvertY: true,
+      gyroHold: true,
+      gyroSixAxis: false,
+    );
+    expect(SettingModel.decode(model.encode()), model);
   });
 }
