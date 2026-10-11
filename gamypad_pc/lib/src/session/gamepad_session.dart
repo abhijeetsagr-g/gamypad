@@ -62,6 +62,8 @@ class GamepadSession {
         device.setTrigger(trigger, value);
       case StickMessage(:final stick, :final x, :final y):
         device.setStick(stick, x, y);
+      case MotionMessage():
+        device.setMotion(message);
       case Ping():
         socket.send(const Pong());
       case Pong():

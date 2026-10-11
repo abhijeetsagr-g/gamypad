@@ -105,6 +105,11 @@ numbers for sticks. Numeric strings are also accepted when decoding.
 
 `GamepadStick` — `leftStick`, `rightStick`.
 
+`MotionMessage` — `action: "motion"`, value `{gx,gy,gz,ax,ay,az}`. Gyro is
+millidegrees per second (±`gyroMax`), accelerometer is milli-g (±`accelMax`),
+both in the controller frame: x to the player's right, y up, z towards the
+player (DualSense axes).
+
 The constant names *are* the wire tokens, not Dart style. Renaming one is a
 breaking protocol change.
 

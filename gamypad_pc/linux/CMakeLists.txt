@@ -131,6 +131,7 @@ endif()
 set(GAMEPAD_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../native/Gamepad.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../native/GamepadApi.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../native/Motion.cpp
 )
 
 add_library(gamepad SHARED ${GAMEPAD_SOURCES})

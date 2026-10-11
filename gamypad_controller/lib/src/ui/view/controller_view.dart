@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
+import 'package:gamypad_controller/src/ui/state/gyro_provider.dart';
 import 'package:gamypad_controller/src/ui/state/input_provider.dart';
 import 'package:gamypad_controller/src/ui/state/layout_controller.dart';
 import 'package:gamypad_controller/src/ui/state/setting_controller.dart';
@@ -43,6 +44,8 @@ class _ControllerViewState extends ConsumerState<ControllerView>
   @override
   Widget build(BuildContext context) {
     final connection = ref.watch(connectionControllerProvider);
+    // Keeps the sensors running (or not) for as long as the pad is on screen.
+    ref.watch(gyroControllerProvider);
 
     final input = ref.read(inputProvider);
     final layout = ref.watch(layoutControllerProvider).value;

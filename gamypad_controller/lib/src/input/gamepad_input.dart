@@ -22,6 +22,12 @@ class GamepadInput {
   StreamSubscription<ConnectionStatus>? _subscription;
   final Set<GamepadButton> _held = {};
 
+  // A finger on a stick wins over the sensors: the motion path stands down
+  // while it is held, and picks up again when it lets go.
+  final Set<GamepadStick> _touched = {};
+  // Last value the motion path sent, so an unchanged reading is not resent.
+  final Map<GamepadStick, ({int x, int y})> _motionSent = {};
+
   @override
   String toString() =>
       'GamepadInput(held: ${_held.isEmpty ? 'none' : _held.join(', ')})';
@@ -38,8 +44,32 @@ class GamepadInput {
   }
 
   void setStick(GamepadStick stick, int x, int y) {
+    if (x != stickCenter || y != stickCenter) {
+      _touched.add(stick);
+    } else {
+      _touched.remove(stick);
+    }
+    _motionSent.remove(stick);
     _send(StickMessage(stick: stick, x: x, y: y));
   }
+
+  /// A stick position that comes from the motion sensors rather than a finger.
+  void setMotionStick(GamepadStick stick, int x, int y) {
+    if (_touched.contains(stick)) return;
+    final next = (x: x, y: y);
+    final last = _motionSent[stick] ?? (x: stickCenter, y: stickCenter);
+    if (next == last) return;
+    _motionSent[stick] = next;
+    _send(StickMessage(stick: stick, x: x, y: y));
+  }
+
+  /// Hands a stick back to centre when motion control stops.
+  void releaseMotionStick(GamepadStick stick) {
+    if (_motionSent.remove(stick) == null || _touched.contains(stick)) return;
+    _send(StickMessage(stick: stick, x: stickCenter, y: stickCenter));
+  }
+
+  void sendMotion(MotionMessage motion) => _send(motion);
 
   void setTrigger(GamepadTrigger trigger, int value) {
     // Digital mode is full-or-nothing — but only while pressed. The release
@@ -58,6 +88,8 @@ class GamepadInput {
       _send(ButtonMessage(button: button, pressed: false));
     }
     _held.clear();
+    _touched.clear();
+    _motionSent.clear();
 
     for (final stick in GamepadStick.values) {
       _send(StickMessage(stick: stick, x: stickCenter, y: stickCenter));

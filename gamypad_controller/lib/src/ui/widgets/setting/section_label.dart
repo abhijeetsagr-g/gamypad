@@ -39,27 +39,32 @@ class SwitchRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: ColorPalette.border),
           ),
-          child: SwitchListTile(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.black,
-            activeTrackColor: ColorPalette.accent,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            title: Text(
-              title,
-              style: const TextStyle(
-                color: ColorPalette.text,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
+          // Own Material so the tile's ink is painted above the DecoratedBox's
+          // background instead of being hidden under it.
+          child: Material(
+            type: MaterialType.transparency,
+            child: SwitchListTile(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: Colors.black,
+              activeTrackColor: ColorPalette.accent,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
               ),
-            ),
-            subtitle: Text(
-              subtitle,
-              style: const TextStyle(color: ColorPalette.muted, fontSize: 12),
+              title: Text(
+                title,
+                style: const TextStyle(
+                  color: ColorPalette.text,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              subtitle: Text(
+                subtitle,
+                style: const TextStyle(color: ColorPalette.muted, fontSize: 12),
+              ),
             ),
           ),
         ),

@@ -68,8 +68,9 @@ class LogController extends Notifier<LogState> {
   }
 
   void _append(Message message) {
-    // Watchdog traffic isn't user input; keep it out of the log.
-    if (message is Ping || message is Pong) return;
+    // Watchdog traffic isn't user input, and motion samples (~50/s) would
+    // push every real input out of the log.
+    if (message is Ping || message is Pong || message is MotionMessage) return;
 
     final entries = [...state.entries];
     final now = DateTime.now();

@@ -30,6 +30,11 @@ LogParts describe(Message message) => switch (message) {
     'x: $x  y: $y',
     valueColor: ColorPalette.accent,
   ),
+  MotionMessage(:final gx, :final gy, :final gz) => LogParts(
+    'motion',
+    'gyro: $gx $gy $gz',
+    valueColor: ColorPalette.muted,
+  ),
   Ping() => const LogParts('PING', '', valueColor: ColorPalette.muted),
   Pong() => const LogParts('PONG', '', valueColor: ColorPalette.muted),
 };
