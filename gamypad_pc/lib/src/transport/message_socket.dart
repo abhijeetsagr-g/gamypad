@@ -7,6 +7,8 @@ abstract interface class MessageSocket {
   Stream<ConnectionState> get state;
   int get port;
   void send(Message message);
-  Future<void> start();
+
+  /// Binds to [port]; 0 lets the OS pick a free one.
+  Future<void> start({int port = 0});
   Future<void> stop();
 }
