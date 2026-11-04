@@ -2,8 +2,10 @@ import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
 import 'package:gamypad_controller/src/layout/default_layout.dart';
+import 'package:gamypad_controller/src/settings/setting_model.dart';
 import 'package:gamypad_controller/src/ui/state/connection_controller.dart';
 import 'package:gamypad_controller/src/ui/state/layout_controller.dart';
+import 'package:gamypad_controller/src/ui/state/setting_controller.dart';
 import 'package:gamypad_controller/src/ui/view/controller_editor_view.dart';
 import 'package:gamypad_controller/src/ui/view/controller_view.dart';
 import 'package:gamypad_controller/src/ui/view/qr_scan_view.dart';
@@ -28,12 +30,35 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
   UdpTarget? _target;
   String? _validationError;
+  bool _userEditedTarget = false;
 
   @override
   void dispose() {
     _host.dispose();
     _port.dispose();
     super.dispose();
+  }
+
+  void _applyRememberedTarget(SettingModel settings) {
+    if (!settings.rememberPcAddress ||
+        _userEditedTarget ||
+        settings.savedPcAddress == null ||
+        settings.savedPcPort == null) {
+      return;
+    }
+    final target = UdpTarget(
+      host: settings.savedPcAddress!,
+      port: settings.savedPcPort!,
+    );
+    if (_host.text == target.host && _port.text == target.port.toString()) {
+      return;
+    }
+    setState(() {
+      _host.text = target.host;
+      _port.text = target.port.toString();
+      _target = target;
+      _validationError = null;
+    });
   }
 
   /// Opens the scanner and adopts whatever it reads.
@@ -44,6 +69,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     if (scanned == null || !mounted) return;
 
     setState(() {
+      _userEditedTarget = true;
       _host.text = scanned.host;
       _port.text = scanned.port.toString();
       _target = scanned;
@@ -58,7 +84,23 @@ class _HomeViewState extends ConsumerState<HomeView> {
       return;
     }
 
-    await ref.read(connectionControllerProvider.notifier).connect(target);
+    final connected = await ref
+        .read(connectionControllerProvider.notifier)
+        .connect(target);
+
+    if (connected) {
+      final settings = await ref.read(settingControllerProvider.future);
+      if (settings.rememberPcAddress) {
+        await ref
+            .read(settingControllerProvider.notifier)
+            .commit(
+              settings.copyWith(
+                savedPcAddress: target.host,
+                savedPcPort: target.port,
+              ),
+            );
+      }
+    }
 
     if (!mounted) return;
     FocusScope.of(context).unfocus();
@@ -86,10 +128,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
   Future<void> _editLayout() async {
     final controller = ref.read(layoutControllerProvider.notifier);
     final active = ref.read(layoutControllerProvider).value;
-    // The built-in default is never edited in place: editing it starts a fresh
-    // "New Layout" draft instead.
-    final isNew =
-        active == null || active.name == DefaultLayout.layout.name;
+    final isNew = active == null || active.name == DefaultLayout.layout.name;
     if (isNew) await controller.startNew();
     if (!mounted) return;
 
@@ -104,6 +143,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(settingControllerProvider, (_, next) {
+      next.whenData(_applyRememberedTarget);
+    });
+
     final connection = ref.watch(connectionControllerProvider);
     final connected = connection.isConnected;
     final error = _validationError ?? connection.error;
@@ -152,29 +195,23 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       letterSpacing: 3,
                     ),
                   ),
-
                   const SizedBox(height: 32),
-
                   TargetFields(
                     host: _host,
                     port: _port,
                     onChanged: (target) => setState(() {
+                      _userEditedTarget = true;
                       _target = target;
                       _validationError = null;
                     }),
                   ),
-
                   if (error case final message?) ...[
                     const SizedBox(height: 16),
                     ErrorBanner(message: message),
                   ],
-
                   const SizedBox(height: 32),
-
                   ScanButton(enabled: !connected, onPressed: _scan),
-
                   const SizedBox(height: 12),
-
                   if (connected)
                     GamepadButton(onPress: _play)
                   else
@@ -184,7 +221,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
                       enabled: _target != null,
                       onConnect: connection.isLost ? _reconnect : _connect,
                     ),
-
                   if (connected) ...[
                     const SizedBox(height: 8),
                     TextButton(

@@ -57,9 +57,6 @@ class ConnectionController extends Notifier<ConnectionState> {
     final transport = ref.watch(transportProvider);
 
     final subscription = transport.status.listen((next) {
-      // Keep the in-flight `busy` flag while a connect attempt is still
-      // running: the transport emits `connecting` before it resolves, and
-      // clearing busy here would hide the spinner and re-enable the button.
       final busy = next == ConnectionStatus.connecting ? state.busy : false;
       state = state.copyWith(status: next, error: null, busy: busy);
     });
@@ -71,30 +68,64 @@ class ConnectionController extends Notifier<ConnectionState> {
   GamepadTransport get _transport => ref.read(transportProvider);
 
   /// Connects to [target], reporting failure through [ConnectionState.error]
-  /// rather than by throwing.
-  Future<void> connect(ConnectionTarget target) async {
-    if (state.busy) return;
+  /// rather than by throwing. Returns whether the transport connected.
+  Future<bool> connect(ConnectionTarget target) async {
+    if (state.busy) return false;
 
-    // Cleared up front: an error from a previous attempt must not sit next to a
-    // spinner for the duration of this one.
-    state = state.copyWith(busy: true, error: null, target: target);
+    state = state.copyWith(
+      busy: true,
+      error: null,
+      target: target,
+      status: ConnectionStatus.connecting,
+    );
 
     try {
       await _transport.connect(target);
+      state = state.copyWith(
+        status: ConnectionStatus.connected,
+        busy: false,
+        error: null,
+        target: target,
+      );
+      return true;
     } on SocketException catch (error) {
-      state = state.copyWith(busy: false, error: error.message);
+      state = state.copyWith(
+        status: ConnectionStatus.disconnected,
+        busy: false,
+        error: error.message,
+      );
     } catch (error) {
-      state = state.copyWith(busy: false, error: '$error');
+      state = state.copyWith(
+        status: ConnectionStatus.disconnected,
+        busy: false,
+        error: '$error',
+      );
     }
+    return false;
   }
 
   Future<void> disconnect() => _transport.disconnect();
 
-  /// Retries the remembered target after a [ConnectionStatus.lost].
-  Future<void> reconnect() async {
+  /// Retries the remembered target, stopping as soon as the transport connects.
+  Future<bool> reconnect({
+    int attempts = 5,
+    Duration delay = const Duration(seconds: 1),
+  }) async {
     final target = state.target;
-    if (target == null) return;
-    await connect(target);
+    if (target == null) return false;
+
+    for (var attempt = 1; attempt <= attempts; attempt++) {
+      if (await connect(target)) return true;
+      if (attempt < attempts) await Future<void>.delayed(delay);
+    }
+
+    state = state.copyWith(
+      status: ConnectionStatus.disconnected,
+      busy: false,
+      error: 'Failed to reconnect after $attempts attempts. '
+          'Please reconfigure the PC address and port.',
+    );
+    return false;
   }
 }
 
