@@ -173,7 +173,7 @@ class _LinkNotice extends StatelessWidget {
     ConnectionStatus.connecting =>
       'Reconnecting. Presses will work again when the link is restored.',
     ConnectionStatus.lost =>
-      'Connection lost. Attempting to reconnect when the app resumes.',
+      'Connection lost. Attempting to reconnect...',
     ConnectionStatus.disconnected =>
       'Not paired. Connect from the home screen to send anything; the pad is '
           'here either way.',
