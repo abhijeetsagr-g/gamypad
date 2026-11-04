@@ -102,34 +102,37 @@ class _ControllerViewState extends ConsumerState<ControllerView>
                         onTrigger: input.setTrigger,
                       ),
               ),
-              Positioned(
-                top: 8,
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  child: Center(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder: (child, anim) => FadeTransition(
-                        opacity: anim,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, -0.6),
-                            end: Offset.zero,
-                          ).animate(anim),
-                          child: child,
+              if (!connection.busy)
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        transitionBuilder: (child, anim) => FadeTransition(
+                          opacity: anim,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, -0.6),
+                              end: Offset.zero,
+                            ).animate(anim),
+                            child: child,
+                          ),
                         ),
+                        child: connection.isConnected
+                            ? const SizedBox.shrink(
+                                key: ValueKey('connected'),
+                              )
+                            : _LinkNotice(
+                                key: ValueKey(connection.status),
+                                status: connection.status,
+                              ),
                       ),
-                      child: connection.isConnected
-                          ? const SizedBox.shrink(key: ValueKey('connected'))
-                          : _LinkNotice(
-                              key: ValueKey(connection.status),
-                              status: connection.status,
-                            ),
                     ),
                   ),
                 ),
-              ),
               if (connection.busy)
                 Positioned.fill(
                   child: ColoredBox(
