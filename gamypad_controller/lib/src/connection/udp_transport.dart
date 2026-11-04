@@ -5,6 +5,7 @@ import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
 import 'package:gamypad_controller/src/connection/gamepad_transport.dart';
 import 'package:protocol/protocol.dart';
+import 'dart:convert';
 
 class UdpTransport implements GamepadTransport {
   UdpTransport({
