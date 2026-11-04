@@ -52,12 +52,17 @@ class ConnectionState {
 
 /// Drives [GamepadTransport] and mirrors its status into [ConnectionState].
 class ConnectionController extends Notifier<ConnectionState> {
+  bool _reconnecting = false;
+
   @override
   ConnectionState build() {
     final transport = ref.watch(transportProvider);
 
     final subscription = transport.status.listen((next) {
-      final busy = next == ConnectionStatus.connecting ? state.busy : false;
+      // Keep the spinner active through the delay between automatic retry
+      // attempts; stop it only on success or when the retry sequence ends.
+      final busy = next == ConnectionStatus.connecting ||
+          (_reconnecting && next != ConnectionStatus.connected);
       state = state.copyWith(status: next, error: null, busy: busy);
     });
     ref.onDispose(subscription.cancel);
@@ -71,7 +76,10 @@ class ConnectionController extends Notifier<ConnectionState> {
   /// rather than by throwing. Returns whether the transport connected.
   Future<bool> connect(ConnectionTarget target) async {
     if (state.busy) return false;
+    return _connectAttempt(target);
+  }
 
+  Future<bool> _connectAttempt(ConnectionTarget target) async {
     state = state.copyWith(
       busy: true,
       error: null,
@@ -91,13 +99,13 @@ class ConnectionController extends Notifier<ConnectionState> {
     } on SocketException catch (error) {
       state = state.copyWith(
         status: ConnectionStatus.disconnected,
-        busy: false,
+        busy: _reconnecting,
         error: error.message,
       );
     } catch (error) {
       state = state.copyWith(
         status: ConnectionStatus.disconnected,
-        busy: false,
+        busy: _reconnecting,
         error: '$error',
       );
     }
@@ -112,20 +120,26 @@ class ConnectionController extends Notifier<ConnectionState> {
     Duration delay = const Duration(seconds: 1),
   }) async {
     final target = state.target;
-    if (target == null) return false;
+    if (target == null || _reconnecting) return false;
 
-    for (var attempt = 1; attempt <= attempts; attempt++) {
-      if (await connect(target)) return true;
-      if (attempt < attempts) await Future<void>.delayed(delay);
+    _reconnecting = true;
+    state = state.copyWith(busy: true, error: null, target: target);
+    try {
+      for (var attempt = 1; attempt <= attempts; attempt++) {
+        if (await _connectAttempt(target)) return true;
+        if (attempt < attempts) await Future<void>.delayed(delay);
+      }
+
+      state = state.copyWith(
+        status: ConnectionStatus.disconnected,
+        busy: false,
+        error: 'Failed to reconnect after $attempts attempts. '
+            'Please reconfigure the PC address and port.',
+      );
+      return false;
+    } finally {
+      _reconnecting = false;
     }
-
-    state = state.copyWith(
-      status: ConnectionStatus.disconnected,
-      busy: false,
-      error: 'Failed to reconnect after $attempts attempts. '
-          'Please reconfigure the PC address and port.',
-    );
-    return false;
   }
 }
 

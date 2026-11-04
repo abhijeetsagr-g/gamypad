@@ -62,6 +62,7 @@ class _ControllerViewState extends ConsumerState<ControllerView>
     _reconnectInProgress = false;
 
     if (!reconnected && mounted) {
+      // Return to the home connection screen after the fifth failed attempt.
       Navigator.of(context).pop();
     }
   }
@@ -129,6 +130,30 @@ class _ControllerViewState extends ConsumerState<ControllerView>
                   ),
                 ),
               ),
+              if (connection.busy)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black54,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            'RECONNECTING…',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 2,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
