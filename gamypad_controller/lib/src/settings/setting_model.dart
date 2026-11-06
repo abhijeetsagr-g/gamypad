@@ -15,6 +15,9 @@ enum GyroMode {
 class SettingModel {
   final bool vibrate;
   final bool digitalTriggers;
+  final bool rememberPcAddress;
+  final String? savedPcAddress;
+  final int? savedPcPort;
   final bool gyroEnabled;
   final GyroMode gyroMode;
 
@@ -31,6 +34,9 @@ class SettingModel {
   const SettingModel({
     this.vibrate = false,
     this.digitalTriggers = false,
+    this.rememberPcAddress = false,
+    this.savedPcAddress,
+    this.savedPcPort,
     this.gyroEnabled = false,
     this.gyroMode = GyroMode.aim,
     this.gyroInvertY = false,
@@ -39,8 +45,11 @@ class SettingModel {
   });
 
   SettingModel copyWith({
-    bool? vibrate,
+    bool? vibrate, 
     bool? digitalTriggers,
+    bool? rememberPcAddress,
+    String? savedPcAddress,
+    int? savedPcPort,
     bool? gyroEnabled,
     GyroMode? gyroMode,
     bool? gyroInvertY,
@@ -49,6 +58,9 @@ class SettingModel {
   }) => SettingModel(
     vibrate: vibrate ?? this.vibrate,
     digitalTriggers: digitalTriggers ?? this.digitalTriggers,
+    rememberPcAddress: rememberPcAddress ?? this.rememberPcAddress,
+    savedPcAddress: savedPcAddress ?? this.savedPcAddress,
+    savedPcPort: savedPcPort ?? this.savedPcPort,
     gyroEnabled: gyroEnabled ?? this.gyroEnabled,
     gyroMode: gyroMode ?? this.gyroMode,
     gyroInvertY: gyroInvertY ?? this.gyroInvertY,
@@ -59,6 +71,9 @@ class SettingModel {
   String encode() => jsonEncode({
     'vibrate': vibrate,
     'digitalTriggers': digitalTriggers,
+    'rememberPcAddress': rememberPcAddress,
+    'savedPcAddress': savedPcAddress,
+    'savedPcPort': savedPcPort,
     'gyroEnabled': gyroEnabled,
     'gyroMode': gyroMode.name,
     'gyroInvertY': gyroInvertY,
@@ -73,6 +88,9 @@ class SettingModel {
     }
     final vibrate = json['vibrate'];
     final digitalTriggers = json['digitalTriggers'];
+    final rememberPcAddress = json['rememberPcAddress'];
+    final savedPcAddress = json['savedPcAddress'];
+    final savedPcPort = json['savedPcPort'];
     final gyroEnabled = json['gyroEnabled'];
     final gyroMode = json['gyroMode'];
     final gyroInvertY = json['gyroInvertY'];
@@ -81,6 +99,11 @@ class SettingModel {
     return SettingModel(
       vibrate: vibrate is bool ? vibrate : false,
       digitalTriggers: digitalTriggers is bool ? digitalTriggers : false,
+      rememberPcAddress: rememberPcAddress is bool
+          ? rememberPcAddress
+          : false,
+      savedPcAddress: savedPcAddress is String ? savedPcAddress : null,
+      savedPcPort: savedPcPort is int ? savedPcPort : null,
       gyroEnabled: gyroEnabled is bool ? gyroEnabled : false,
       gyroMode: GyroMode.values.asNameMap()[gyroMode] ?? GyroMode.aim,
       gyroInvertY: gyroInvertY is bool ? gyroInvertY : false,
@@ -95,16 +118,21 @@ class SettingModel {
       other is SettingModel &&
           other.vibrate == vibrate &&
           other.digitalTriggers == digitalTriggers &&
+          other.rememberPcAddress == rememberPcAddress &&
+          other.savedPcAddress == savedPcAddress &&
+          other.savedPcPort == savedPcPort &&
           other.gyroEnabled == gyroEnabled &&
           other.gyroMode == gyroMode &&
           other.gyroInvertY == gyroInvertY &&
           other.gyroHold == gyroHold &&
           other.gyroSixAxis == gyroSixAxis;
-
   @override
   int get hashCode => Object.hash(
     vibrate,
     digitalTriggers,
+    rememberPcAddress,
+    savedPcAddress,
+    savedPcPort,
     gyroEnabled,
     gyroMode,
     gyroInvertY,
@@ -115,6 +143,8 @@ class SettingModel {
   @override
   String toString() =>
       'SettingModel(vibrate: $vibrate, digitalTriggers: $digitalTriggers, '
+      'rememberPcAddress: $rememberPcAddress, savedPcAddress: $savedPcAddress, '
+      'savedPcPort: $savedPcPort, '
       'gyroEnabled: $gyroEnabled, gyroMode: ${gyroMode.name}, '
       'invertY: $gyroInvertY, hold: $gyroHold, sixAxis: $gyroSixAxis)';
 }

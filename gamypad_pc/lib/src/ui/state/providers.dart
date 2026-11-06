@@ -35,6 +35,21 @@ final localIpProvider = FutureProvider<String>((ref) async {
     type: InternetAddressType.IPv4,
     includeLoopback: false,
   );
+
+  // Prefer a dedicated hotspot/AP interface over Docker or regular Wi-Fi.
+  interfaces.sort((a, b) {
+    int priority(NetworkInterface iface) {
+      final name = iface.name.toLowerCase();
+      if (name.contains("hotspot") ||
+          name.endsWith("_ap") ||
+          name.endsWith("-ap"))
+        return 0;
+      return 1;
+    }
+
+    return priority(a).compareTo(priority(b));
+  });
+
   for (final iface in interfaces) {
     for (final addr in iface.addresses) {
       if (!addr.isLoopback) return addr.address;

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_pc/src/transport/message_socket.dart';
 import 'package:gamypad_pc/src/ui/state/providers.dart';
+import 'package:gamypad_pc/src/ui/state/server_settings_controller.dart';
 
 class ServerState {
   final ConnectionState connection;
@@ -57,7 +58,8 @@ class ServerController extends Notifier<ServerState> {
     state = state.copyWith(busy: true, error: null);
 
     try {
-      await session.start();
+      final settings = await ref.read(serverSettingsControllerProvider.future);
+      await session.start(port: settings.port);
 
       final ip = await ref.read(localIpProvider.future);
       state = state.copyWith(port: session.port, ip: ip);

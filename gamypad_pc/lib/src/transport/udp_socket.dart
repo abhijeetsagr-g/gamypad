@@ -37,10 +37,10 @@ class UdpSocket implements MessageSocket {
   Stream<Message> get messages => _messages.stream;
 
   @override
-  Future<void> start() async {
-    _trace('start() binding to anyIPv4:0');
+  Future<void> start({int port = 0}) async {
+    _trace('start() binding to anyIPv4:$port');
     try {
-      _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, port);
     } catch (e) {
       _trace('bind FAILED: ${e.runtimeType}: $e');
       rethrow;
