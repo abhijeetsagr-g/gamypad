@@ -45,6 +45,9 @@ class SettingView extends ConsumerWidget {
             onDigitalTriggersChanged: (value) => ref
                 .read(settingControllerProvider.notifier)
                 .commit(model.copyWith(digitalTriggers: value)),
+            onRememberPcAddressChanged: (value) => ref
+                .read(settingControllerProvider.notifier)
+                .commit(model.copyWith(rememberPcAddress: value)),
           ),
         ),
       ),
@@ -57,11 +60,13 @@ class _Body extends StatelessWidget {
     required this.model,
     required this.onVibrateChanged,
     required this.onDigitalTriggersChanged,
+    required this.onRememberPcAddressChanged,
   });
 
   final SettingModel model;
   final ValueChanged<bool> onVibrateChanged;
   final ValueChanged<bool> onDigitalTriggersChanged;
+  final ValueChanged<bool> onRememberPcAddressChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -74,19 +79,28 @@ class _Body extends StatelessWidget {
             const LayoutSection(),
             const SizedBox(height: 24),
             SwitchRow(
-              label: "FEEDBACK",
-              title: "Vibration",
+              label: 'FEEDBACK',
+              title: 'Vibration',
               subtitle: 'Haptic feedback on button presses',
               value: model.vibrate,
               onChanged: onVibrateChanged,
             ),
             const SizedBox(height: 24),
             SwitchRow(
-              label: "CONTROLS",
-              title: "Digital triggers",
-              subtitle: "Touching a trigger sends a full press",
+              label: 'CONTROLS',
+              title: 'Digital triggers',
+              subtitle: 'Touching a trigger sends a full press',
               value: model.digitalTriggers,
               onChanged: onDigitalTriggersChanged,
+            ),
+            const SizedBox(height: 24),
+            SwitchRow(
+              label: 'CONNECTION',
+              title: 'Remember PC address',
+              subtitle:
+                  'Fill in the last connected PC address and port next time',
+              value: model.rememberPcAddress,
+              onChanged: onRememberPcAddressChanged,
             ),
           ],
         ),

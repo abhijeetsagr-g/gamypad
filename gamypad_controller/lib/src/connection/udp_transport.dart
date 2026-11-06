@@ -1,20 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:gamypad_controller/src/connection/connection_status.dart';
 import 'package:gamypad_controller/src/connection/connection_target.dart';
 import 'package:gamypad_controller/src/connection/gamepad_transport.dart';
 import 'package:protocol/protocol.dart';
+import 'dart:convert';
 
 class UdpTransport implements GamepadTransport {
   UdpTransport({
     this.pingInterval = const Duration(seconds: 3),
     this.watchdogInterval = const Duration(seconds: 5),
+    this.connectionTimeout = const Duration(seconds: 2),
   });
 
   final Duration pingInterval;
   final Duration watchdogInterval;
+  final Duration connectionTimeout;
 
   RawDatagramSocket? _socket;
 
@@ -26,6 +28,7 @@ class UdpTransport implements GamepadTransport {
   Timer? _watchdog;
 
   DateTime? _lastPong;
+  Completer<void>? _firstPong;
   bool _tearingDown = false;
 
   final _status = StreamController<ConnectionStatus>.broadcast();
@@ -49,7 +52,6 @@ class UdpTransport implements GamepadTransport {
         throw SocketException('Could not resolve ${target.host}');
       }
 
-      // Port 0 asks the OS for a free port.
       final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
 
       _socket = socket;
@@ -64,14 +66,19 @@ class UdpTransport implements GamepadTransport {
       );
 
       _lastPong = DateTime.now();
+      final firstPong = Completer<void>();
+      _firstPong = firstPong;
       _startPing();
       _startWatchdog();
-
+      await send(const Ping());
+      await firstPong.future.timeout(connectionTimeout);
+      _firstPong = null;
       _status.add(ConnectionStatus.connected);
     } catch (_) {
+      _firstPong = null;
       _teardown();
       _status.add(ConnectionStatus.disconnected);
-      rethrow; // The casller needs the reason; connect_view shows it to the user.
+      rethrow;
     }
   }
 
@@ -90,6 +97,7 @@ class UdpTransport implements GamepadTransport {
     _watchdog = null;
 
     _lastPong = null;
+    _firstPong = null;
     _target = null;
     _targetPort = null;
     _resolved = const [];
@@ -116,8 +124,7 @@ class UdpTransport implements GamepadTransport {
     try {
       socket.send(utf8.encode(message.encode()), address, port);
     } on SocketException {
-      // Closed between the guard above and here. A send is not the place to
-      // tear the link down — the watchdog's job is to notice, and it will.
+      // Closed between the guard above and here; the watchdog detects this.
     }
   }
 
@@ -151,11 +158,12 @@ class UdpTransport implements GamepadTransport {
       return;
     }
 
-    // The PC answers pings and says nothing else.
     if (message is! Pong) return;
 
     _lastPong = DateTime.now();
     _incoming.add(message);
+    final firstPong = _firstPong;
+    if (firstPong != null && !firstPong.isCompleted) firstPong.complete();
   }
 
   void _startWatchdog() {
