@@ -13,6 +13,15 @@ typedef _GamepadReleaseKeyC = Void Function(Pointer<Void>, Pointer<Utf8>);
 typedef _GamepadSetAxisC = Void Function(Pointer<Void>, Int32, Int32, Int32);
 typedef _GamepadSetTriggerC = Void Function(Pointer<Void>, Int32, Int32);
 typedef _GamepadSetDpadC = Void Function(Pointer<Void>, Int32, Int32);
+typedef _MotionSetC = Void Function(
+  Pointer<Void>,
+  Int32,
+  Int32,
+  Int32,
+  Int32,
+  Int32,
+  Int32,
+);
 
 // Dart typedefs
 typedef GamepadNew = Pointer<Void> Function();
@@ -22,6 +31,7 @@ typedef GamepadReleaseKey = void Function(Pointer<Void>, Pointer<Utf8>);
 typedef GamepadSetAxis = void Function(Pointer<Void>, int, int, int);
 typedef GamepadSetTrigger = void Function(Pointer<Void>, int, int);
 typedef GamepadSetDpad = void Function(Pointer<Void>, int, int);
+typedef MotionSet = void Function(Pointer<Void>, int, int, int, int, int, int);
 
 // Use this function to run those C++ functions
 final GamepadNew gamepadNew = _lib.lookupFunction<_GamepadNewC, GamepadNew>(
@@ -43,3 +53,13 @@ final GamepadSetTrigger gamepadSetTrigger = _lib
     );
 final GamepadSetDpad gamepadSetDpad = _lib
     .lookupFunction<_GamepadSetDpadC, GamepadSetDpad>('Gamepad_setDpad');
+
+/// Returns a null pointer when the motion device cannot be created.
+final GamepadNew motionNew = _lib.lookupFunction<_GamepadNewC, GamepadNew>(
+  'Motion_new',
+);
+final GamepadDelete motionDelete = _lib
+    .lookupFunction<_GamepadDeleteC, GamepadDelete>('Motion_delete');
+final MotionSet motionSet = _lib.lookupFunction<_MotionSetC, MotionSet>(
+  'Motion_set',
+);

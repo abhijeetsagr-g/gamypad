@@ -22,6 +22,18 @@ const int stickMax = 32767;
 /// A centred stick. Zero is exactly halfway, so the range is symmetric.
 const int stickCenter = 0;
 
+/// Inclusive bounds for each gyroscope axis of a [MotionMessage], in
+/// millidegrees per second (±2000 °/s, the usual range of a game-controller
+/// IMU).
+const int gyroMax = 2000000;
+const int gyroMin = -gyroMax;
+
+/// Inclusive bounds for each accelerometer axis of a [MotionMessage], in
+/// milli-g (±16 g). A phone at rest reads about 1000 on whichever axis points
+/// at the sky.
+const int accelMax = 16000;
+const int accelMin = -accelMax;
+
 /// Messages exactly as they are on the wire (JSON).
 ///
 /// Every message uses the same two keys. `action` names the input, `value`
@@ -32,6 +44,7 @@ const int stickCenter = 0;
 ///   Button:   {"action":"A","value":1}              1 pressed, 0 released
 ///   Trigger:  {"action":"LT","value":255}           triggerMin..triggerMax
 ///   Stick:    {"action":"leftStick","value":{"x":32767,"y":-32767}}
+///   Motion:   {"action":"motion","value":{"gx":0,"gy":0,"gz":0,"ax":0,"ay":1000,"az":0}}
 ///
 /// The `type` key is reserved for connection health; everything else is input.
 sealed class Message {
@@ -55,6 +68,8 @@ sealed class Message {
       throw FormatException('Message has neither "type" nor "action": $json');
     }
     final value = json['value'];
+
+    if (action == MotionMessage.action) return MotionMessage.parse(value);
 
     final button = _byName(GamepadButton.values, action);
     if (button != null) {
@@ -193,5 +208,55 @@ final class StickMessage extends Message {
   Map<String, dynamic> toJson() => {
     'action': stick.name,
     'value': {'x': x, 'y': y},
+  };
+}
+
+/// One reading of the controller's motion sensors, in the *controller* frame:
+/// x to the player's right, y up, z towards the player — the same axes a
+/// DualShock/DualSense reports. The sender converts from its own device frame.
+///
+/// Gyro is angular velocity in millidegrees per second, accelerometer is
+/// milli-g, both [gyroMin]..[gyroMax] / [accelMin]..[accelMax].
+final class MotionMessage extends Message {
+  /// The `action` token. Not a button, trigger or stick name.
+  static const action = 'motion';
+
+  final int gx, gy, gz;
+  final int ax, ay, az;
+
+  const MotionMessage({
+    this.gx = 0,
+    this.gy = 0,
+    this.gz = 0,
+    this.ax = 0,
+    this.ay = 0,
+    this.az = 0,
+  }) : assert(gx >= gyroMin && gx <= gyroMax),
+       assert(gy >= gyroMin && gy <= gyroMax),
+       assert(gz >= gyroMin && gz <= gyroMax),
+       assert(ax >= accelMin && ax <= accelMax),
+       assert(ay >= accelMin && ay <= accelMax),
+       assert(az >= accelMin && az <= accelMax);
+
+  factory MotionMessage.parse(Object? raw) {
+    if (raw is! Map) {
+      throw FormatException('Motion "value" must be an object, got: $raw');
+    }
+    int gyro(String key) => _asInt(raw[key], key, gyroMin, gyroMax);
+    int accel(String key) => _asInt(raw[key], key, accelMin, accelMax);
+    return MotionMessage(
+      gx: gyro('gx'),
+      gy: gyro('gy'),
+      gz: gyro('gz'),
+      ax: accel('ax'),
+      ay: accel('ay'),
+      az: accel('az'),
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'action': action,
+    'value': {'gx': gx, 'gy': gy, 'gz': gz, 'ax': ax, 'ay': ay, 'az': az},
   };
 }

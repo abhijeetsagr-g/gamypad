@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gamypad_controller/src/settings/setting_model.dart';
 import 'package:gamypad_controller/src/ui/state/setting_controller.dart';
+import 'package:gamypad_controller/src/ui/widgets/setting/gyro_section.dart';
 import 'package:gamypad_controller/src/ui/widgets/setting/layout_section.dart';
 import 'package:gamypad_controller/src/ui/widgets/setting/section_label.dart';
 import 'package:gamypad_controller/src/utils/app_theme.dart';
@@ -48,6 +49,14 @@ class SettingView extends ConsumerWidget {
             onRememberPcAddressChanged: (value) => ref
                 .read(settingControllerProvider.notifier)
                 .commit(model.copyWith(rememberPcAddress: value)),
+            onGyroEnabledChanged: (value) => ref
+                .read(settingControllerProvider.notifier)
+                .commit(model.copyWith(gyroEnabled: value)),
+            onGyroModeChanged: (value) => ref
+                .read(settingControllerProvider.notifier)
+                .commit(model.copyWith(gyroMode: value)),
+            onChanged: (next) =>
+                ref.read(settingControllerProvider.notifier).commit(next),
           ),
         ),
       ),
@@ -61,12 +70,18 @@ class _Body extends StatelessWidget {
     required this.onVibrateChanged,
     required this.onDigitalTriggersChanged,
     required this.onRememberPcAddressChanged,
+    required this.onGyroEnabledChanged,
+    required this.onGyroModeChanged,
+    required this.onChanged,
   });
 
   final SettingModel model;
   final ValueChanged<bool> onVibrateChanged;
   final ValueChanged<bool> onDigitalTriggersChanged;
   final ValueChanged<bool> onRememberPcAddressChanged;
+  final ValueChanged<bool> onGyroEnabledChanged;
+  final ValueChanged<GyroMode> onGyroModeChanged;
+  final ValueChanged<SettingModel> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +116,13 @@ class _Body extends StatelessWidget {
                   'Fill in the last connected PC address and port next time',
               value: model.rememberPcAddress,
               onChanged: onRememberPcAddressChanged,
+            ),
+            const SizedBox(height: 24),
+            GyroSection(
+              model: model,
+              onEnabledChanged: onGyroEnabledChanged,
+              onModeChanged: onGyroModeChanged,
+              onChanged: onChanged,
             ),
           ],
         ),

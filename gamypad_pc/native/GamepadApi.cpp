@@ -1,4 +1,5 @@
 #include "Gamepad.h"
+#include "Motion.h"
 
 extern "C" {
     // Create a new Gamepad instance
@@ -33,6 +34,24 @@ extern "C" {
 
     void Gamepad_setDpad(Gamepad* gp, int xValue, int yValue) {
         gp->setDpad(xValue, yValue);
+    }
+
+    // Motion sensors. Motion_new returns null when the device cannot be created.
+    Motion* Motion_new() {
+        Motion* m = new Motion();
+        if (!m->ok()) {
+            delete m;
+            return nullptr;
+        }
+        return m;
+    }
+
+    void Motion_delete(Motion* m) {
+        delete m;
+    }
+
+    void Motion_set(Motion* m, int gx, int gy, int gz, int ax, int ay, int az) {
+        m->set(gx, gy, gz, ax, ay, az);
     }
 
 }

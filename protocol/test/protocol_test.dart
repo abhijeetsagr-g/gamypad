@@ -384,6 +384,64 @@ void main() {
     });
   });
 
+  group('MotionMessage', () {
+    test('round-trips through the wire', () {
+      const original = MotionMessage(
+        gx: -1500,
+        gy: 2000000,
+        gz: 0,
+        ax: 16000,
+        ay: -1000,
+        az: 3,
+      );
+      final decoded = Message.fromJson(_decode(original.encode()));
+      expect(decoded, isA<MotionMessage>());
+      expect(decoded.toJson(), original.toJson());
+    });
+
+    test('uses the two-key shape', () {
+      expect(const MotionMessage().toJson().keys.toSet(), {'action', 'value'});
+    });
+
+    test('rejects out-of-range, missing and non-object values', () {
+      final base = {'gx': 0, 'gy': 0, 'gz': 0, 'ax': 0, 'ay': 0, 'az': 0};
+      expect(
+        () => Message.fromJson({
+          'action': 'motion',
+          'value': {...base, 'gx': gyroMax + 1},
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => Message.fromJson({
+          'action': 'motion',
+          'value': {...base, 'az': accelMin - 1},
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => Message.fromJson({
+          'action': 'motion',
+          'value': {'gx': 0},
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => Message.fromJson({'action': 'motion', 'value': 5}),
+        throwsFormatException,
+      );
+    });
+
+    test('"motion" collides with no button, trigger or stick name', () {
+      final names = [
+        ...GamepadButton.values,
+        ...GamepadTrigger.values,
+        ...GamepadStick.values,
+      ].map((e) => e.name);
+      expect(names, isNot(contains(MotionMessage.action)));
+    });
+  });
+
   group('malformed messages', () {
     test('an unknown action is rejected', () {
       expect(
