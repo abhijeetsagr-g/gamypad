@@ -42,8 +42,9 @@ final localIpProvider = FutureProvider<String>((ref) async {
       final name = iface.name.toLowerCase();
       if (name.contains("hotspot") ||
           name.endsWith("_ap") ||
-          name.endsWith("-ap"))
+          name.endsWith("-ap")) {
         return 0;
+      }
       return 1;
     }
 
