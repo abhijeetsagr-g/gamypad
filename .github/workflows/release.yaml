@@ -10,6 +10,13 @@ on:
 
   pull_request:
 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 1.2.0)"
+        required: true
+        type: string
+
 permissions:
   contents: write
 
@@ -31,23 +38,36 @@ jobs:
       - name: Prepare build metadata
         id: meta
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
-            ARTIFACT_SUFFIX="$VERSION"
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            VERSION="$INPUT_VERSION"
+
+            if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "Invalid version: $VERSION"
+              exit 1
+            fi
           else
             VERSION="0.0.0"
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" || "$GITHUB_REF" == refs/tags/v* ]]; then
+            ARTIFACT_SUFFIX="$VERSION"
+          else
             ARTIFACT_SUFFIX="ci-${GITHUB_SHA::7}"
           fi
 
-          BUILD_NUMBER="$GITHUB_RUN_NUMBER"
-
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build_number=$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
           echo "artifact_suffix=$ARTIFACT_SUFFIX" >> "$GITHUB_OUTPUT"
 
       - name: Create release assets directory
         run: mkdir -p release-assets
+
+      # Java and Flutter
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -62,6 +82,8 @@ jobs:
           channel: stable
           cache: true
 
+      # Linux dependencies
+
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
@@ -71,13 +93,19 @@ jobs:
             file \
             patchelf \
             desktop-file-utils \
+            pkg-config \
             libgtk-3-dev \
             libglib2.0-dev \
+            libgirepository1.0-dev \
+            gobject-introspection \
+            librsvg2-dev \
             libfuse2 \
             fuse \
             libblkid-dev \
             liblzma-dev \
             libgcrypt20-dev
+
+      # AppImage tools
 
       - name: Download AppImage tools
         run: |
@@ -88,18 +116,20 @@ jobs:
             -o tools/linuxdeploy
 
           curl -fL \
-            https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk.sh \
-            -o tools/linuxdeploy-plugin-gtk
+            https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh \
+            -o tools/linuxdeploy-plugin-gtk.sh
 
           curl -fL \
-            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
             -o tools/appimagetool
 
           chmod +x tools/linuxdeploy
-          chmod +x tools/linuxdeploy-plugin-gtk
+          chmod +x tools/linuxdeploy-plugin-gtk.sh
           chmod +x tools/appimagetool
 
           echo "$GITHUB_WORKSPACE/tools" >> "$GITHUB_PATH"
+
+      # Linux build
 
       - name: Get Linux dependencies
         working-directory: gamypad_pc
@@ -115,6 +145,8 @@ jobs:
             --release \
             --build-name="$VERSION" \
             --build-number="$BUILD_NUMBER"
+
+      # AppDir
 
       - name: Prepare AppDir
         working-directory: gamypad_pc
@@ -136,6 +168,10 @@ jobs:
           Categories=Game;Utility;
           EOF
 
+          desktop-file-validate AppDir/gamypad.desktop
+
+      # Bundle dependencies
+
       - name: Bundle Linux dependencies
         working-directory: gamypad_pc
         env:
@@ -148,18 +184,10 @@ jobs:
             --icon-file AppDir/gamypad.png \
             --plugin gtk
 
-      - name: Configure AppRun
-        working-directory: gamypad_pc
-        run: |
-          cat > AppDir/AppRun <<'EOF'
-          #!/bin/sh
-          HERE="$(dirname "$(readlink -f "$0")")"
-          export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/bin/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-          exec "$HERE/usr/bin/gamypad_pc" "$@"
-          EOF
+          test -e AppDir/AppRun
+          test -f AppDir/usr/bin/gamypad_pc
 
-          chmod +x AppDir/AppRun
-          chmod +x AppDir/usr/bin/gamypad_pc
+      # AppImage
 
       - name: Package Linux AppImage
         env:
@@ -173,6 +201,8 @@ jobs:
             "release-assets/$APPIMAGE_NAME"
 
           chmod +x "release-assets/$APPIMAGE_NAME"
+
+      # Android build
 
       - name: Get Android dependencies
         working-directory: gamypad_controller
@@ -201,11 +231,15 @@ jobs:
           cp build/app/outputs/bundle/release/app-release.aab \
             "../release-assets/Gamypad-Android-${ARTIFACT_SUFFIX}.aab"
 
+      # Checksums
+
       - name: Generate MD5 checksums
         working-directory: release-assets
         run: |
           md5sum *.AppImage *.apk *.aab > MD5SUMS.txt
           cat MD5SUMS.txt
+
+      # CI artifacts
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -215,12 +249,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      # GitHub Release
+
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: v${{ steps.meta.outputs.version }}
           name: Gamypad ${{ steps.meta.outputs.version }}
           files: release-assets/*
           generate_release_notes: true
+          prerelease: ${{ contains(steps.meta.outputs.version, '-') }}
           fail_on_unmatched_files: true
