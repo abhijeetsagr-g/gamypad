@@ -1,4 +1,3 @@
-
 name: Gamypad CI/CD
 
 on:
@@ -13,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (e.g. 1.2.0)"
+        description: "Release version (e.g. 1.0 or 1.0.0)"
         required: true
         type: string
 
@@ -45,25 +44,21 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
           elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
             VERSION="$INPUT_VERSION"
-
-            if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            if [[ ! "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}(-[0-9A-Za-z.-]+)?$ ]]; then
               echo "Invalid version: $VERSION"
               exit 1
             fi
           else
             VERSION="0.0.0"
           fi
-
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" || "$GITHUB_REF" == refs/tags/v* ]]; then
             ARTIFACT_SUFFIX="$VERSION"
           else
             ARTIFACT_SUFFIX="ci-${GITHUB_SHA::7}"
           fi
-
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build_number=$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
           echo "artifact_suffix=$ARTIFACT_SUFFIX" >> "$GITHUB_OUTPUT"
-
       - name: Create release assets directory
         run: mkdir -p release-assets
 
@@ -94,6 +89,7 @@ jobs:
             patchelf \
             desktop-file-utils \
             pkg-config \
+            imagemagick \
             libgtk-3-dev \
             libglib2.0-dev \
             libgirepository1.0-dev \
@@ -104,31 +100,24 @@ jobs:
             libblkid-dev \
             liblzma-dev \
             libgcrypt20-dev
-
       # AppImage tools
 
       - name: Download AppImage tools
         run: |
           mkdir -p tools
-
           curl -fL \
             https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
             -o tools/linuxdeploy
-
           curl -fL \
             https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh \
             -o tools/linuxdeploy-plugin-gtk.sh
-
           curl -fL \
             https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
             -o tools/appimagetool
-
           chmod +x tools/linuxdeploy
           chmod +x tools/linuxdeploy-plugin-gtk.sh
           chmod +x tools/appimagetool
-
           echo "$GITHUB_WORKSPACE/tools" >> "$GITHUB_PATH"
-
       # Linux build
 
       - name: Get Linux dependencies
@@ -145,7 +134,6 @@ jobs:
             --release \
             --build-name="$VERSION" \
             --build-number="$BUILD_NUMBER"
-
       # AppDir
 
       - name: Prepare AppDir
@@ -153,10 +141,9 @@ jobs:
         run: |
           rm -rf AppDir
           mkdir -p AppDir/usr/bin
-
           cp -a build/linux/x64/release/bundle/. AppDir/usr/bin/
-          cp assets/icon.png AppDir/gamypad.png
-
+          # Resize icon to a supported AppImage resolution
+          convert assets/icon.png -resize 512x512 AppDir/gamypad.png
           cat > AppDir/gamypad.desktop <<'EOF'
           [Desktop Entry]
           Name=Gamypad
@@ -167,9 +154,7 @@ jobs:
           Type=Application
           Categories=Game;Utility;
           EOF
-
           desktop-file-validate AppDir/gamypad.desktop
-
       # Bundle dependencies
 
       - name: Bundle Linux dependencies
@@ -183,10 +168,8 @@ jobs:
             --desktop-file AppDir/gamypad.desktop \
             --icon-file AppDir/gamypad.png \
             --plugin gtk
-
           test -e AppDir/AppRun
           test -f AppDir/usr/bin/gamypad_pc
-
       # AppImage
 
       - name: Package Linux AppImage
@@ -195,18 +178,39 @@ jobs:
           ARTIFACT_SUFFIX: ${{ steps.meta.outputs.artifact_suffix }}
         run: |
           APPIMAGE_NAME="Gamypad-${ARTIFACT_SUFFIX}-x86_64.AppImage"
-
           ARCH=x86_64 tools/appimagetool \
             gamypad_pc/AppDir \
             "release-assets/$APPIMAGE_NAME"
-
           chmod +x "release-assets/$APPIMAGE_NAME"
+      # Android setup
 
-      # Android build
-
+      - name: Install Android NDK
+        shell: bash
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          SDKMANAGER="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          NDK_VERSION="28.2.13676358"
+          echo "Android SDK: $SDK"
+          rm -rf "$SDK/ndk/$NDK_VERSION"
+          for attempt in 1 2 3; do
+            echo "Installing NDK (attempt $attempt/3)..."
+            if "$SDKMANAGER" --install "ndk;$NDK_VERSION"; then
+              break
+            fi
+            rm -rf "$SDK/ndk/$NDK_VERSION"
+            if [ "$attempt" -eq 3 ]; then
+              echo "NDK installation failed after 3 attempts."
+              exit 1
+            fi
+            sleep 10
+          done
+          test -f "$SDK/ndk/$NDK_VERSION/source.properties"
+          echo "NDK installation verified."
       - name: Get Android dependencies
         working-directory: gamypad_controller
         run: flutter pub get
+
+      # Android build
 
       - name: Build Android APK and AAB
         working-directory: gamypad_controller
@@ -219,18 +223,14 @@ jobs:
             --release \
             --build-name="$VERSION" \
             --build-number="$BUILD_NUMBER"
-
           flutter build appbundle \
             --release \
             --build-name="$VERSION" \
             --build-number="$BUILD_NUMBER"
-
           cp build/app/outputs/flutter-apk/app-release.apk \
             "../release-assets/Gamypad-Android-${ARTIFACT_SUFFIX}.apk"
-
           cp build/app/outputs/bundle/release/app-release.aab \
             "../release-assets/Gamypad-Android-${ARTIFACT_SUFFIX}.aab"
-
       # Checksums
 
       - name: Generate MD5 checksums
@@ -238,7 +238,6 @@ jobs:
         run: |
           md5sum *.AppImage *.apk *.aab > MD5SUMS.txt
           cat MD5SUMS.txt
-
       # CI artifacts
 
       - name: Upload build artifacts
