@@ -1,0 +1,332 @@
+
+name: Gamypad Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: 1.2.0)"
+        required: true
+        type: string
+        default: "1.0.0"
+
+      variant:
+        description: "Build variant number"
+        required: true
+        type: number
+        default: 1
+
+      tag_name:
+        description: "Git tag to publish (leave empty to use vVERSION)"
+        required: false
+        type: string
+
+      notes_source:
+        description: "Where should the release notes come from?"
+        required: true
+        type: choice
+        options:
+          - commit_messages
+          - changelog
+          - manual
+        default: commit_messages
+
+      changelog_path:
+        description: "Changelog file path"
+        required: false
+        type: string
+        default: "CHANGELOG.md"
+
+      custom_notes:
+        description: "Write your own release notes"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gamypad-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Gamypad
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare release metadata
+        id: meta
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VARIANT: ${{ inputs.variant }}
+          INPUT_TAG: ${{ inputs.tag_name }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            VARIANT="1"
+            TAG_NAME="$GITHUB_REF_NAME"
+          else
+            VERSION="${INPUT_VERSION#v}"
+            VARIANT="${INPUT_VARIANT:-1}"
+
+            if [[ -n "$INPUT_TAG" ]]; then
+              TAG_NAME="$INPUT_TAG"
+            else
+              TAG_NAME="v${VERSION}"
+            fi
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9A-Za-z][0-9A-Za-z.+_-]*$ ]]; then
+            echo "Invalid version: $VERSION"
+            exit 1
+          fi
+
+          if [[ ! "$VARIANT" =~ ^[0-9]+$ ]]; then
+            echo "Variant must be a number."
+            exit 1
+          fi
+
+          APPIMAGE_NAME="Gamypad-${VERSION}-variant${VARIANT}-x86_64.AppImage"
+          APK_NAME="Gamypad-Android-${VERSION}-variant${VARIANT}.apk"
+          AAB_NAME="Gamypad-Android-${VERSION}-variant${VARIANT}.aab"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "variant=$VARIANT" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "appimage_name=$APPIMAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$APK_NAME" >> "$GITHUB_OUTPUT"
+          echo "aab_name=$AAB_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create release assets directory
+        run: mkdir -p release-assets
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.9"
+          channel: stable
+          cache: true
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            patchelf \
+            desktop-file-utils \
+            libgtk-3-dev \
+            libglib2.0-dev \
+            libfuse2 \
+            fuse \
+            libblkid-dev \
+            liblzma-dev \
+            libgcrypt20-dev
+
+      - name: Download linuxdeploy and appimagetool
+        run: |
+          mkdir -p tools
+
+          curl -L \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
+            -o tools/linuxdeploy
+
+          curl -L \
+            https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk.sh \
+            -o tools/linuxdeploy-plugin-gtk.sh
+
+          curl -L \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -o tools/appimagetool
+
+          chmod +x tools/linuxdeploy
+          chmod +x tools/linuxdeploy-plugin-gtk.sh
+          chmod +x tools/appimagetool
+
+          echo "$GITHUB_WORKSPACE/tools" >> "$GITHUB_PATH"
+
+      - name: Get Linux Flutter dependencies
+        working-directory: gamypad_pc
+        run: flutter pub get
+
+      - name: Build Linux application
+        working-directory: gamypad_pc
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          VARIANT: ${{ steps.meta.outputs.variant }}
+        run: |
+          flutter build linux \
+            --release \
+            --build-name="$VERSION" \
+            --build-number="$VARIANT"
+
+      - name: Prepare AppDir
+        working-directory: gamypad_pc
+        run: |
+          rm -rf AppDir
+
+          mkdir -p AppDir/usr/bin
+
+          cp -a build/linux/x64/release/bundle/. AppDir/usr/bin/
+
+          cp dist/gamypad.desktop AppDir/gamypad.desktop
+          cp assets/icon.png AppDir/gamypad.png
+
+          cat > AppDir/AppRun <<'EOF'
+          #!/bin/sh
+
+          HERE="$(dirname "$(readlink -f "$0")")"
+
+          export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/bin/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+          exec "$HERE/usr/bin/gamypad_pc" "$@"
+          EOF
+
+          chmod +x AppDir/AppRun
+          chmod +x AppDir/usr/bin/gamypad_pc
+
+      - name: Bundle Linux dependencies
+        working-directory: gamypad_pc
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
+          linuxdeploy \
+            --appdir AppDir \
+            --executable AppDir/usr/bin/gamypad_pc \
+            --desktop-file AppDir/gamypad.desktop \
+            --icon-file AppDir/gamypad.png \
+            --plugin gtk
+
+      - name: Package Linux AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          APPIMAGE_NAME: ${{ steps.meta.outputs.appimage_name }}
+        run: |
+          ARCH=x86_64 tools/appimagetool \
+            gamypad_pc/AppDir \
+            "release-assets/$APPIMAGE_NAME"
+
+          chmod +x "release-assets/$APPIMAGE_NAME"
+
+      - name: Get Android Flutter dependencies
+        working-directory: gamypad_controller
+        run: flutter pub get
+
+      - name: Build Android APK and AAB
+        working-directory: gamypad_controller
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          VARIANT: ${{ steps.meta.outputs.variant }}
+          APK_NAME: ${{ steps.meta.outputs.apk_name }}
+          AAB_NAME: ${{ steps.meta.outputs.aab_name }}
+        run: |
+          flutter build apk \
+            --release \
+            --build-name="$VERSION" \
+            --build-number="$VARIANT"
+
+          flutter build appbundle \
+            --release \
+            --build-name="$VERSION" \
+            --build-number="$VARIANT"
+
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "../release-assets/$APK_NAME"
+
+          cp build/app/outputs/bundle/release/app-release.aab \
+            "../release-assets/$AAB_NAME"
+
+      - name: Generate MD5 checksums
+        working-directory: release-assets
+        run: |
+          md5sum *.AppImage *.apk *.aab > MD5SUMS.txt
+          cat MD5SUMS.txt
+
+      - name: Generate release notes
+        env:
+          NOTES_SOURCE: ${{ inputs.notes_source || 'commit_messages' }}
+          CUSTOM_NOTES: ${{ inputs.custom_notes }}
+          CHANGELOG_PATH: ${{ inputs.changelog_path || 'CHANGELOG.md' }}
+          TAG_NAME: ${{ steps.meta.outputs.tag_name }}
+        run: |
+          case "$NOTES_SOURCE" in
+            manual)
+              if [[ -z "$CUSTOM_NOTES" ]]; then
+                echo "Manual release notes were selected, but no notes were provided."
+                exit 1
+              fi
+
+              printf '%s\n' "$CUSTOM_NOTES" > release-notes.md
+              ;;
+
+            changelog)
+              if [[ ! -f "$CHANGELOG_PATH" ]]; then
+                echo "Changelog file not found: $CHANGELOG_PATH"
+                exit 1
+              fi
+
+              cp "$CHANGELOG_PATH" release-notes.md
+              ;;
+
+            commit_messages)
+              PREVIOUS_TAG=""
+
+              if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+                PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${GITHUB_SHA}^" 2>/dev/null || true)
+              else
+                PREVIOUS_TAG=$(git tag --sort=-creatordate | head -n 1)
+              fi
+
+              if [[ -n "$PREVIOUS_TAG" ]]; then
+                git log "$PREVIOUS_TAG..$GITHUB_SHA" \
+                  --pretty=format:'- %s (%h)' \
+                  > release-notes.md
+              else
+                git log "$GITHUB_SHA" \
+                  --pretty=format:'- %s (%h)' \
+                  > release-notes.md
+              fi
+
+              if [[ ! -s release-notes.md ]]; then
+                echo "Release build for $TAG_NAME" > release-notes.md
+              fi
+              ;;
+
+            *)
+              echo "Unknown release notes source: $NOTES_SOURCE"
+              exit 1
+              ;;
+          esac
+
+          cat release-notes.md
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag_name }}
+          name: Gamypad ${{ steps.meta.outputs.version }} (variant ${{ steps.meta.outputs.variant }})
+          body_path: release-notes.md
+          files: |
+            release-assets/*
+          draft: false
+          prerelease: false
+          generate_release_notes: false
